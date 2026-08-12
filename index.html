@@ -180,6 +180,9 @@
           <div>
             <h3>기준을 정해요</h3>
             <p>진입금액, 동시 그리드 수, 최소 속도, 진입 간격과 횟수, 매도 그리드 폭. 값을 바꾸면 화면이 "지금 설정이면 고점에서 몇 % 떨어져야 진입해요"까지 계산해서 알려줘요.</p>
+            <div class="step-links">
+              <a class="chip" href="#settings">설정값 하나씩 살펴보기</a>
+            </div>
           </div>
         </li>
         <li class="step">
@@ -190,6 +193,140 @@
           </div>
         </li>
       </ol>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="section section-alt" id="settings">
+    <div class="wrap">
+      <p class="eyebrow">설정</p>
+      <h2 class="section-title">설정값, 어렵지 않아요</h2>
+      <p class="section-sub">여섯 개 값이 서로 맞물려 있어서 헷갈리기 쉬워요. 값을 움직여 보면서 무슨 일이 생기는지 먼저 확인해요.</p>
+
+      <!-- 시뮬레이터 -->
+      <div class="sim">
+        <div class="sim-inputs">
+          <div class="field">
+            <label for="s-amount">진입금액 <span>USD</span></label>
+            <input type="number" id="s-amount" value="100" min="1" max="100000" step="1" inputmode="decimal" />
+            <p>종목 하나를 살 때 쓰는 금액이에요.</p>
+          </div>
+
+          <div class="field">
+            <label for="s-grids">동시 그리드 수 <output for="s-grids" id="o-grids">3</output></label>
+            <input type="range" id="s-grids" value="3" min="1" max="6" step="1" />
+            <p>한 번에 몇 종목까지 들고 관리할지예요. 1~6개.</p>
+          </div>
+
+          <div class="field">
+            <label for="s-interval">진입 간격 <output for="s-interval" id="o-interval">1%</output></label>
+            <input type="range" id="s-interval" value="1" min="0.5" max="10" step="0.5" />
+            <p>최근 고점에서 이만큼 내려올 때마다 한 칸으로 세요.</p>
+          </div>
+
+          <div class="field">
+            <label for="s-count">진입 횟수 <output for="s-count" id="o-count">3</output></label>
+            <input type="range" id="s-count" value="3" min="1" max="10" step="1" />
+            <p>칸이 이만큼 쌓이면 바닥으로 보고 매수해요.</p>
+          </div>
+
+          <div class="field">
+            <label for="s-width">그리드 폭 <output for="s-width" id="o-width">10%</output></label>
+            <input type="range" id="s-width" value="10" min="1" max="50" step="1" />
+            <p>산 뒤에 평단 ±이만큼에 매수·매도를 걸어둬요.</p>
+          </div>
+
+          <div class="field">
+            <label for="s-mult">매수 배율 <output for="s-mult" id="o-mult">1배</output></label>
+            <input type="range" id="s-mult" value="1" min="0.5" max="5" step="0.5" />
+            <p>물타기할 때 보유수량의 몇 배를 더 살지예요.</p>
+          </div>
+        </div>
+
+        <div class="sim-out" aria-live="polite">
+          <h3>이렇게 움직여요</h3>
+
+          <div class="out">
+            <span class="out-k">첫 진입에 들어가는 돈</span>
+            <b class="out-v" id="r-exposure">$300.00</b>
+            <span class="out-d">진입금액 × 동시 그리드 수예요. 물타기가 시작되면 종목당 금액은 여기서 더 늘어나요.</span>
+          </div>
+
+          <div class="out">
+            <span class="out-k">매수 신호가 뜨는 낙폭</span>
+            <b class="out-v" id="r-drop">2.97%</b>
+            <span class="out-d">고점에서 이만큼 떨어져야 한 종목에 진입해요. 중간에 한 칸 이상 반등하면 처음부터 다시 세요.</span>
+          </div>
+
+          <div class="out">
+            <span class="out-k">평단 $100일 때 걸리는 주문</span>
+            <b class="out-v"><span class="down" id="r-buy">$90.00</span> <span class="sep">·</span> <span class="up" id="r-sell">$110.00</span></b>
+            <span class="out-d">아래는 더 사는 자리(물타기), 위는 파는 자리(익절)예요.</span>
+          </div>
+
+          <div class="out">
+            <span class="out-k">10주를 들고 물타기하면</span>
+            <b class="out-v" id="r-qty">+10주 → 20주</b>
+            <span class="out-d">보유수량 × 매수 배율만큼 더 사요. 배율 1이면 살 때마다 수량이 두 배가 돼요.</span>
+          </div>
+
+          <p class="sim-note" id="r-note"></p>
+        </div>
+      </div>
+
+      <!-- 항목별 설명 -->
+      <h3 class="sub-title">항목별로 자세히</h3>
+
+      <div class="settings-groups">
+        <article class="sgroup">
+          <h4>트레이딩 설정</h4>
+          <dl>
+            <dt>진입금액 <em>USD · 기본값 없음</em></dt>
+            <dd>종목 하나를 살 때 쓸 금액이에요. 이 금액을 현재가로 나눠 수량을 정하고, 1주도 못 사는 금액이면 그 종목은 건너뛰어요. <b>기본값을 일부러 비워 뒀어요</b> — 실제 주문 금액이라 저희가 임의로 정할 수 없어서, 직접 넣기 전에는 자동 트레이딩이 시작되지 않아요.</dd>
+
+            <dt>동시 그리드 수 <em>1~6 · 기본 3</em></dt>
+            <dd>한 번에 관리할 종목 개수예요. 자리가 다 차면 새로 사지 않고, 한 종목이 익절돼 자리가 비면 그 자리에 다음 종목이 들어와요. 이미 들고 있는 종목은 다시 사지 않아요.</dd>
+
+            <dt>최소 속도 <em>틱/초 · 기본 1</em></dt>
+            <dd>10초 동안 체결이 얼마나 자주 오는지를 재서, 이보다 조용한 종목은 아예 감시하지 않아요. 거래가 뜸한 종목은 사놓고도 팔리지 않아서 걸러내는 장치예요. 값을 올리면 후보가 줄고, 낮추면 한산한 종목까지 들어와요.</dd>
+          </dl>
+          <p class="sgroup-note">이 세 값은 <b>정지 상태에서만</b> 적용돼요. 매매 중에 저장하면 정지한 뒤 트레이딩 화면으로 돌아올 때 반영돼요.</p>
+        </article>
+
+        <article class="sgroup">
+          <h4>진입 감지 — 언제 살까</h4>
+          <dl>
+            <dt>진입 간격 <em>% · 최대 10 · 기본 1</em></dt>
+            <dd>감시를 시작한 뒤의 고점에서 이 %만큼 떨어질 때마다 한 칸을 세요. 이보다 작은 잔파동은 세지 않아요.</dd>
+
+            <dt>진입 횟수 <em>1~10 · 기본 3</em></dt>
+            <dd>칸이 이 횟수만큼 쌓이면 바닥으로 보고 실제로 매수해요. 도중에 한 칸 이상 반등하면 세던 걸 버리고 새 고점부터 다시 세요.</dd>
+          </dl>
+          <p class="sgroup-note">두 값은 곱해져서 "고점에서 몇 % 빠져야 사는가"가 돼요. 크게 잡을수록 깊이 빠졌을 때만 사니 신중해지고, 대신 기회는 줄어요.</p>
+        </article>
+
+        <article class="sgroup">
+          <h4>매도 그리드 — 산 다음에 어떻게 할까</h4>
+          <dl>
+            <dt>그리드 폭 <em>% · 최대 50 · 기본 10</em></dt>
+            <dd>매수가 체결되면 평단 기준 <b>−폭에 매수</b>, <b>+폭에 매도</b> 지정가를 함께 걸어요. 오르면 팔아서 자리를 비우고, 내리면 더 사서 평단을 낮춘 뒤 다시 ±폭에 새로 걸어요.</dd>
+
+            <dt>매수 배율 <em>최대 5 · 기본 1</em></dt>
+            <dd>물타기할 때 <b>보유수량 × 배율</b>만큼 더 사요. 1이면 살 때마다 수량이 두 배가 되고, 0.5면 1.5배씩 늘어요. 크게 둘수록 평단은 빨리 내려가지만 한 종목에 묶이는 금액이 급하게 불어나요.</dd>
+          </dl>
+          <p class="sgroup-note">폭과 배율은 <b>다음에 새로 여는 그리드부터</b> 적용돼요. 지금 돌고 있는 그리드는 이미 주문이 접수돼 있어서 원래 값 그대로 관리돼요.</p>
+        </article>
+
+        <article class="sgroup">
+          <h4>주문</h4>
+          <dl>
+            <dt>매수 미체결 취소 <em>0~10초 · 기본 0(꺼짐)</em></dt>
+            <dd>매수 주문이 이 시간 안에 붙지 않으면 취소하고 다시 변곡점을 기다려요. 권장은 2~3초예요. 일부라도 체결됐으면 취소하지 않고 그대로 기다리고, 취소가 세 번 이어지면 그 종목은 1분간 쉬어요. <b>0으로 두면</b> 체결될 때까지 계속 기다려요.</dd>
+          </dl>
+        </article>
+      </div>
+
+      <p class="settings-warn">손절 설정은 없어요. 그리드가 익절될 때까지 들고 가는 구조라, 폭·배율을 크게 잡을수록 한 종목에 오래·많이 묶일 수 있어요. 처음에는 작은 진입금액으로 한 사이클을 끝까지 지켜보는 걸 권해요.</p>
     </div>
   </section>
 
@@ -342,6 +479,59 @@
 </dialog>
 
 <script>
+// 설정 시뮬레이터 — 계산식은 앱 설정 화면의 미리보기와 같아요.
+(function () {
+  var el = function (id) { return document.getElementById(id); };
+  var sim = el('s-amount');
+  if (!sim) return;
+
+  var inputs = ['s-amount', 's-grids', 's-interval', 's-count', 's-width', 's-mult'].map(el);
+
+  var usd = function (n) {
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  function render() {
+    var amount = Number(el('s-amount').value);
+    var grids = Number(el('s-grids').value);
+    var interval = Number(el('s-interval').value);
+    var count = Number(el('s-count').value);
+    var width = Number(el('s-width').value);
+    var mult = Number(el('s-mult').value);
+
+    el('o-grids').textContent = grids + '개';
+    el('o-interval').textContent = interval + '%';
+    el('o-count').textContent = count + '번';
+    el('o-width').textContent = width + '%';
+    el('o-mult').textContent = mult + '배';
+
+    var valid = Number.isFinite(amount) && amount > 0;
+    el('r-exposure').textContent = valid ? usd(amount * grids) : '금액을 넣어 주세요';
+
+    // 누적 낙폭은 복리라 단순히 간격 × 횟수보다 조금 작아요.
+    var drop = (1 - Math.pow(1 - interval / 100, count)) * 100;
+    el('r-drop').textContent = drop.toFixed(2) + '%';
+
+    el('r-buy').textContent = usd(100 * (1 - width / 100));
+    el('r-sell').textContent = usd(100 * (1 + width / 100));
+
+    var add = Math.floor(10 * mult);
+    el('r-qty').textContent = '+' + add + '주 → ' + (10 + add) + '주';
+
+    var notes = [];
+    if (drop >= 20) notes.push('낙폭 조건이 커서 매수 신호가 드물게 떠요.');
+    if (drop <= 1) notes.push('낙폭 조건이 작아서 잔파동에도 자주 진입해요.');
+    if (mult >= 2) notes.push('배율이 높아 물타기 한 번에 수량이 크게 늘어요.');
+    if (width >= 25) notes.push('폭이 넓어 한 사이클이 오래 걸릴 수 있어요.');
+    el('r-note').textContent = notes.join(' ');
+  }
+
+  inputs.forEach(function (input) {
+    input.addEventListener('input', render);
+  });
+  render();
+})();
+
 (function () {
   var sheet = document.getElementById('guide');
   // <dialog>를 못 쓰는 브라우저에서는 링크 그대로 원문으로 이동해요.
