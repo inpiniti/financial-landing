@@ -170,6 +170,10 @@
           <div>
             <h3>계좌를 연결해요</h3>
             <p>한국투자증권에서 받은 AppKey·AppSecret과 계좌번호를 넣고 토큰을 발급해요. 키는 기기 보안 저장소에 암호화해서 보관하고, 서버로 보내지 않아요.</p>
+            <div class="step-links">
+              <a class="chip" href="https://wikidocs.net/165209" target="_blank" rel="noopener" data-guide="account">계좌 만드는 법</a>
+              <a class="chip" href="https://wikidocs.net/165188" target="_blank" rel="noopener" data-guide="api">AppKey 받는 법</a>
+            </div>
           </div>
         </li>
         <li class="step">
@@ -237,6 +241,151 @@
     <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
   </div>
 </footer>
+
+<!-- GUIDE SHEET -->
+<dialog class="sheet" id="guide" aria-labelledby="guide-title">
+  <div class="sheet-head">
+    <h2 id="guide-title">계좌 연결 준비하기</h2>
+    <button class="sheet-close" type="button" data-close aria-label="닫기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <div class="seg" role="tablist" aria-label="가이드 종류">
+    <button role="tab" type="button" id="tab-account" aria-controls="panel-account" aria-selected="true" data-tab="account">계좌 만들기</button>
+    <button role="tab" type="button" id="tab-api" aria-controls="panel-api" aria-selected="false" data-tab="api">AppKey 받기</button>
+  </div>
+
+  <div class="sheet-body">
+    <!-- 계좌 개설 -->
+    <section class="panel" id="panel-account" role="tabpanel" aria-labelledby="tab-account">
+      <p class="panel-lead">한국투자증권 계좌가 아직 없다면 폰으로 10분이면 만들 수 있어요. 영업점에 가지 않아도 돼요.</p>
+
+      <ol class="guide">
+        <li>
+          <h3>한국투자증권 앱을 설치해요</h3>
+          <p>앱스토어나 플레이스토어에서 <b>한국투자증권</b>을 검색해 설치해요.</p>
+        </li>
+        <li>
+          <h3>비대면 계좌 개설을 시작해요</h3>
+          <p>앱을 열고 <b>비대면 계좌 개설하기</b>를 눌러요.</p>
+        </li>
+        <li>
+          <h3>계좌 종류는 국내+해외주식으로</h3>
+          <p>SEEDTICK은 미국 주식을 거래하니 해외주식이 포함된 계좌를 골라야 해요. 고른 다음 <b>원하는 계좌만 개설</b>을 눌러요.</p>
+        </li>
+        <li>
+          <h3>본인 확인을 해요</h3>
+          <p>휴대폰 본인확인 → 스마트폰 계좌개설 → 온라인 계좌 선택 → 약관 동의 → 신분증 촬영 순서로 이어져요.</p>
+        </li>
+        <li>
+          <h3>본인 명의 계좌로 인증해요</h3>
+          <p>쓰고 있는 은행을 고르고 본인 명의 계좌번호를 넣으면, 그 계좌에 1원이 입금돼요. 입금 내역에 찍힌 <b>4자리 숫자</b>를 입력하면 인증이 끝나요.</p>
+        </li>
+        <li>
+          <h3>투자자 정보와 투자성향을 입력해요</h3>
+          <p>투자자정보를 채우고 투자성향 분석 문항에 답한 뒤 등록을 마쳐요.</p>
+        </li>
+        <li>
+          <h3>비밀번호를 등록하면 끝이에요</h3>
+          <p>계좌 비밀번호 4자리와 간편 비밀번호, 지문이나 Face ID까지 등록하면 계좌가 열려요.</p>
+        </li>
+      </ol>
+
+      <a class="source" href="https://wikidocs.net/165209" target="_blank" rel="noopener">
+        화면 캡처와 함께 보기 — 위키독스 원문
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+      </a>
+    </section>
+
+    <!-- API 신청 -->
+    <section class="panel" id="panel-api" role="tabpanel" aria-labelledby="tab-api" hidden>
+      <p class="panel-lead">계좌를 만들었다면 오픈API를 신청해서 AppKey와 AppSecret을 받아요. PC 브라우저에서 진행해요.</p>
+
+      <ol class="guide">
+        <li>
+          <h3>홈페이지에 로그인해요</h3>
+          <p><a href="https://www.truefriend.com" target="_blank" rel="noopener">truefriend.com</a>에 접속해 우측 상단 <b>로그인</b> → <b>스마트폰 인증</b>을 골라요. 앱에서 <b>메뉴 → 인증센터 → PC인증</b>으로 들어가 화면의 QR을 스캔하거나 인증번호를 넣으면 로그인돼요.</p>
+        </li>
+        <li>
+          <h3>KIS Developers를 신청해요</h3>
+          <p>상단 메뉴에서 <b>트레이딩 → Open API → KIS Developers</b>로 이동해요. 인증번호 요청을 누르면 문자가 오고, 번호를 넣은 뒤 <b>신청</b>을 눌러요.</p>
+        </li>
+        <li>
+          <h3>약관에 동의해요</h3>
+          <p>유의사항을 읽고 동의하면 다음 단계로 넘어가요.</p>
+        </li>
+        <li>
+          <h3>신청 정보에 계좌를 연결해요</h3>
+          <p>개인 정보를 확인하고 계좌 정보에 방금 만든 계좌를 연결해요. 이 화면에 보이는 <b>아이디</b>는 개발자센터 로그인에 쓰니 적어 두세요.</p>
+        </li>
+        <li>
+          <h3>AppKey와 AppSecret을 받아요</h3>
+          <p>신청이 끝나면 <b>APP Key</b>와 <b>APP Secret</b>이 나와요. 이 두 값과 계좌번호를 SEEDTICK 계좌 화면에 넣으면 연결이 끝나요. 임시비밀번호는 카카오톡으로 따로 와요.</p>
+          <p class="warn">이 두 값만 있으면 누구나 계좌에 주문을 낼 수 있어요. 화면을 캡처해서 공유하거나 다른 사람에게 보여주지 마세요.</p>
+        </li>
+        <li>
+          <h3>모의투자로 먼저 해보고 싶다면</h3>
+          <p><b>트레이딩 → 모의투자 → 주식/선물옵션 모의투자 → 모의투자안내</b>에서 신청하고, 리그구분에서 국내·해외주식을 골라요. 그다음 KIS Developers에서 <b>모의투자계좌</b>를 선택해 다시 신청하면 모의용 키가 따로 나와요. 실전과 모의는 키가 서로 달라요.</p>
+        </li>
+      </ol>
+
+      <a class="source" href="https://wikidocs.net/165188" target="_blank" rel="noopener">
+        화면 캡처와 함께 보기 — 위키독스 원문
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+      </a>
+
+      <p class="panel-note">한국투자증권 화면은 이 안내와 조금 다를 수 있어요. 막히는 곳이 있으면 원문이나 고객센터를 확인해 주세요.</p>
+    </section>
+  </div>
+
+  <div class="sheet-foot">
+    <button class="btn btn-primary" type="button" data-close>닫기</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var sheet = document.getElementById('guide');
+  // <dialog>를 못 쓰는 브라우저에서는 링크 그대로 원문으로 이동해요.
+  if (!sheet || typeof sheet.showModal !== 'function') return;
+
+  function selectTab(name) {
+    document.querySelectorAll('.seg [data-tab]').forEach(function (btn) {
+      var on = btn.dataset.tab === name;
+      btn.setAttribute('aria-selected', String(on));
+      document.getElementById('panel-' + btn.dataset.tab).hidden = !on;
+    });
+    sheet.querySelector('.sheet-body').scrollTop = 0;
+  }
+
+  document.querySelectorAll('[data-guide]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      selectTab(link.dataset.guide);
+      sheet.showModal();
+      document.documentElement.classList.add('sheet-open');
+    });
+  });
+
+  document.querySelectorAll('.seg [data-tab]').forEach(function (btn) {
+    btn.addEventListener('click', function () { selectTab(btn.dataset.tab); });
+  });
+
+  sheet.querySelectorAll('[data-close]').forEach(function (btn) {
+    btn.addEventListener('click', function () { sheet.close(); });
+  });
+
+  // 바깥 영역을 누르면 닫혀요.
+  sheet.addEventListener('click', function (e) {
+    if (e.target === sheet) sheet.close();
+  });
+
+  sheet.addEventListener('close', function () {
+    document.documentElement.classList.remove('sheet-open');
+  });
+})();
+</script>
 
 </body>
 </html>
