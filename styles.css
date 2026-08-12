@@ -65,17 +65,7 @@ a { color: inherit; text-decoration: none; }
   font-size: 1.0625rem;
   letter-spacing: 0.02em;
 }
-.brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: var(--primary);
-  color: #fff;
-}
-.brand-mark svg { width: 16px; height: 16px; }
+.brand-mark { width: auto; height: 28px; }
 
 /* ── buttons ─────────────────────────────────────── */
 .btn {
