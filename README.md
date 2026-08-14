@@ -8,6 +8,8 @@
 index.html          모든 섹션 (히어로 · 기능 · 화면 · 시작하는 법 · 설치 · 주의사항)
                     + 설정 시뮬레이터 · 항목별 설명 (#settings)
                     + 계좌 개설 / AppKey 발급 가이드 시트(<dialog>, 인라인 스크립트)
+grid-risk.html      그리드 리스크 계산표 (/grid-risk) — 매수 간격×매도 익절×배율 전 조합의
+                    올인 낙폭·반등 요구폭. 계산식이 앱 core/grid의 물타기 규칙에서 온다.
 styles.css          토스 디자인 토큰 기반 스타일
 assets/qr.svg       설치 페이지 QR 코드 (37×37 모듈, quiet zone 3)
 assets/favicon.svg

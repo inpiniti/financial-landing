@@ -179,7 +179,7 @@
           <span class="step-num">2</span>
           <div>
             <h3>기준을 정해요</h3>
-            <p>진입금액, 동시 그리드 수, 최소 속도, 진입 간격과 횟수, 매도 그리드 폭. 값을 바꾸면 화면이 "지금 설정이면 고점에서 몇 % 떨어져야 진입해요"까지 계산해서 알려줘요.</p>
+            <p>진입금액, 동시 그리드 수, 최소 속도, 진입 간격과 횟수, 그리드의 매수 간격·매도 익절. 값을 바꾸면 화면이 "지금 설정이면 고점에서 몇 % 떨어져야 진입해요"까지 계산해서 알려줘요.</p>
             <div class="step-links">
               <a class="chip" href="#settings">설정값 하나씩 살펴보기</a>
             </div>
@@ -201,7 +201,7 @@
     <div class="wrap">
       <p class="eyebrow">설정</p>
       <h2 class="section-title">설정값, 어렵지 않아요</h2>
-      <p class="section-sub">여섯 개 값이 서로 맞물려 있어서 헷갈리기 쉬워요. 값을 움직여 보면서 무슨 일이 생기는지 먼저 확인해요.</p>
+      <p class="section-sub">일곱 개 값이 서로 맞물려 있어서 헷갈리기 쉬워요. 값을 움직여 보면서 무슨 일이 생기는지 먼저 확인해요.</p>
 
       <!-- 시뮬레이터 -->
       <div class="sim">
@@ -231,9 +231,15 @@
           </div>
 
           <div class="field">
-            <label for="s-width">그리드 폭 <output for="s-width" id="o-width">10%</output></label>
-            <input type="range" id="s-width" value="10" min="1" max="50" step="1" />
-            <p>산 뒤에 평단 ±이만큼에 매수·매도를 걸어둬요.</p>
+            <label for="s-bwidth">매수 간격 <output for="s-bwidth" id="o-bwidth">5%</output></label>
+            <input type="range" id="s-bwidth" value="5" min="1" max="50" step="1" />
+            <p>산 뒤에 평단에서 이만큼 내려간 자리에 물타기를 걸어둬요.</p>
+          </div>
+
+          <div class="field">
+            <label for="s-swidth">매도 익절 <output for="s-swidth" id="o-swidth">2%</output></label>
+            <input type="range" id="s-swidth" value="2" min="1" max="50" step="1" />
+            <p>평단에서 이만큼 오르면 전량 익절해요.</p>
           </div>
 
           <div class="field">
@@ -308,13 +314,16 @@
         <article class="sgroup">
           <h4>매도 그리드 — 산 다음에 어떻게 할까</h4>
           <dl>
-            <dt>그리드 폭 <em>% · 최대 50 · 기본 10</em></dt>
-            <dd>매수가 체결되면 평단 기준 <b>−폭에 매수</b>, <b>+폭에 매도</b> 지정가를 함께 걸어요. 오르면 팔아서 자리를 비우고, 내리면 더 사서 평단을 낮춘 뒤 다시 ±폭에 새로 걸어요.</dd>
+            <dt>매수 간격 <em>% · 최대 50 · 기본 5</em></dt>
+            <dd>매수가 체결되면 평단에서 <b>이만큼 내려간 자리에 물타기 매수</b> 지정가를 걸어요. 넓게 잡을수록 같은 자금으로 더 깊은 낙폭까지 버텨요.</dd>
+
+            <dt>매도 익절 <em>% · 최대 50 · 기본 2</em></dt>
+            <dd>평단에서 <b>이만큼 오르면 전량 익절</b>해요. 좁게 잡을수록 바닥에서 필요한 반등이 작아 사이클이 잘 돌고, 대신 한 번에 버는 폭도 작아져요. 매수 간격과 따로 두는 이유예요 — 방어는 깊게, 익절은 짧게.</dd>
 
             <dt>매수 배율 <em>최대 5 · 기본 1</em></dt>
             <dd>물타기할 때 <b>보유수량 × 배율</b>만큼 더 사요. 1이면 살 때마다 수량이 두 배가 되고, 0.5면 1.5배씩 늘어요. 크게 둘수록 평단은 빨리 내려가지만 한 종목에 묶이는 금액이 급하게 불어나요.</dd>
           </dl>
-          <p class="sgroup-note">폭과 배율은 <b>다음에 새로 여는 그리드부터</b> 적용돼요. 지금 돌고 있는 그리드는 이미 주문이 접수돼 있어서 원래 값 그대로 관리돼요.</p>
+          <p class="sgroup-note">세 값은 <b>다음에 새로 여는 그리드부터</b> 적용돼요. 지금 돌고 있는 그리드는 이미 주문이 접수돼 있어서 원래 값 그대로 관리돼요. 조합별로 올인까지의 낙폭과 필요한 반등폭이 궁금하면 <a href="grid-risk"><b>그리드 리스크 계산표</b></a>에서 전 조합을 볼 수 있어요.</p>
         </article>
 
         <article class="sgroup">
@@ -485,7 +494,7 @@
   var sim = el('s-amount');
   if (!sim) return;
 
-  var inputs = ['s-amount', 's-grids', 's-interval', 's-count', 's-width', 's-mult'].map(el);
+  var inputs = ['s-amount', 's-grids', 's-interval', 's-count', 's-bwidth', 's-swidth', 's-mult'].map(el);
 
   var usd = function (n) {
     return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -496,13 +505,15 @@
     var grids = Number(el('s-grids').value);
     var interval = Number(el('s-interval').value);
     var count = Number(el('s-count').value);
-    var width = Number(el('s-width').value);
+    var bwidth = Number(el('s-bwidth').value);
+    var swidth = Number(el('s-swidth').value);
     var mult = Number(el('s-mult').value);
 
     el('o-grids').textContent = grids + '개';
     el('o-interval').textContent = interval + '%';
     el('o-count').textContent = count + '번';
-    el('o-width').textContent = width + '%';
+    el('o-bwidth').textContent = bwidth + '%';
+    el('o-swidth').textContent = swidth + '%';
     el('o-mult').textContent = mult + '배';
 
     var valid = Number.isFinite(amount) && amount > 0;
@@ -512,8 +523,8 @@
     var drop = (1 - Math.pow(1 - interval / 100, count)) * 100;
     el('r-drop').textContent = drop.toFixed(2) + '%';
 
-    el('r-buy').textContent = usd(100 * (1 - width / 100));
-    el('r-sell').textContent = usd(100 * (1 + width / 100));
+    el('r-buy').textContent = usd(100 * (1 - bwidth / 100));
+    el('r-sell').textContent = usd(100 * (1 + swidth / 100));
 
     var add = Math.floor(10 * mult);
     el('r-qty').textContent = '+' + add + '주 → ' + (10 + add) + '주';
@@ -522,7 +533,9 @@
     if (drop >= 20) notes.push('낙폭 조건이 커서 매수 신호가 드물게 떠요.');
     if (drop <= 1) notes.push('낙폭 조건이 작아서 잔파동에도 자주 진입해요.');
     if (mult >= 2) notes.push('배율이 높아 물타기 한 번에 수량이 크게 늘어요.');
-    if (width >= 25) notes.push('폭이 넓어 한 사이클이 오래 걸릴 수 있어요.');
+    if (bwidth >= 25) notes.push('매수 간격이 넓어 물타기가 드물게 나가요.');
+    if (swidth >= 10) notes.push('매도 익절이 커서 한 사이클이 오래 걸릴 수 있어요.');
+    if (swidth > bwidth) notes.push('보통은 매수 간격을 매도 익절보다 넓게 둬요 — 방어는 깊게, 익절은 짧게.');
     el('r-note').textContent = notes.join(' ');
   }
 
