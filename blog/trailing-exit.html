@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>익절 상한을 없앴더니 1.74배, 그런데 그중 40%가 가짜였다 — SEEDTICK 기술블로그</title>
+<meta name="description" content="“+5%에 파는 게 이상하지 않나”라는 한마디에서 시작해 청산만 바꿔 4폴드를 다시 돌렸다. 답은 트레일링이었고, 그 답을 믿기 전에 액면분할 잔재 한 봉을 먼저 잡아야 했다." />
+<meta name="theme-color" content="#f7f9fc" />
+<link rel="icon" href="../assets/favicon.png" type="image/png" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="익절 상한을 없앴더니 1.74배, 그런데 그중 40%가 가짜였다 — SEEDTICK 기술블로그" />
+<meta property="og:description" content="“+5%에 파는 게 이상하지 않나”라는 한마디에서 시작해 청산만 바꿔 4폴드를 다시 돌렸다. 답은 트레일링이었고, 그 답을 믿기 전에 액면분할 잔재 한 봉을 먼저 잡아야 했다." />
+<meta property="og:image" content="../assets/shots/trading.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" />
+<link rel="stylesheet" href="../styles.css" />
+<link rel="stylesheet" href="../blog.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" />
+      SEEDTICK
+    </a>
+    <nav class="nav-links">
+      <a href="./">기술블로그</a>
+      <a class="btn btn-ghost btn-sm" href="../#install">설치하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="post">
+    <header class="post-head">
+      <a class="back-link" href="./">← 기술블로그</a>
+      <h1>익절 상한을 없앴더니 1.74배, 그런데 그중 40%가 가짜였다</h1>
+      <p class="summary">“+5%에 파는 게 이상하지 않나”라는 한마디에서 시작해 청산만 바꿔 4폴드를 다시 돌렸다. 답은 트레일링이었고, 그 답을 믿기 전에 액면분할 잔재 한 봉을 먼저 잡아야 했다.</p>
+      <div class="post-meta">
+        <span class="tag">전략</span>
+        <time datetime="2026-08-24">2026.08.24</time>
+        <span>읽는 데 8분</span>
+      </div>
+    </header>
+
+    <div class="prose">
+<p>모델은 “지금 사면 −2%를 찍기 전에 +5%에 닿나”를 3년 반치 데이터로 학습했다. 그런데 <b>사고 나서는 모델에게 아무것도 묻지 않았다.</b> 청산은 라벨에 박혀 있던 기하(+5% 익절 / −2% 손절 / 120분 타임아웃)를 그대로 자로 쓰고 있었다.</p>
+
+<blockquote>
+  <p>“더 오를 게 뻔한데 +5%라고 파는 건 이상하지 않나.”</p>
+  <cite>2026-08-23, 사용자 지적</cite>
+</blockquote>
+
+<p>맞는 지적이었다. 라벨의 +5%는 <b>정답을 정의하려고 그은 선</b>이지 팔아야 하는 가격이 아니다. 그래서 진입 신호를 워크포워드와 완전히 동일하게 고정하고, <b>청산만</b> 바꿔 4폴드(2024-07~2026-04)를 다시 돌렸다.</p>
+
+<h2>1. 먼저 “팔 타이밍에 먹을 게 있나”부터</h2>
+
+<p>바꾸기 전에 천장을 봐야 했다. 모든 거래를 그날 최고가에 판 <b>오라클</b> 청산이 얼마인지 재 보니, 현행의 24배였다. 게이트 통과. 팔 타이밍에는 아직 남은 게 많았다.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>청산 방식</th><th class="num">거래</th><th class="num">승률</th><th class="num">거래당</th><th class="num">PF</th><th class="num">보유</th></tr></thead>
+<tbody>
+<tr><td>+5% / −2% / 120분 (옛)</td><td class="num">6,581</td><td class="num">38.3%</td><td class="num">+0.33%</td><td class="num">1.239</td><td class="num">18분</td></tr>
+<tr><td>트레일 −1.5%</td><td class="num">9,404</td><td class="num">39.5%</td><td class="num">+0.20%</td><td class="num">1.292</td><td class="num">7분</td></tr>
+<tr><td>트레일 −3%</td><td class="num">7,173</td><td class="num">39.6%</td><td class="num">+0.48%</td><td class="num">1.450</td><td class="num">18분</td></tr>
+<tr class="hl"><td>트레일 −5%</td><td class="num">6,121</td><td class="num">33.6%</td><td class="num">+0.62%</td><td class="num">1.458</td><td class="num">37분</td></tr>
+<tr><td>마감까지 홀드(손절 −2%)</td><td class="num">4,631</td><td class="num">16.0%</td><td class="num">+0.63%</td><td class="num">1.332</td><td class="num">111분</td></tr>
+<tr><td>오라클(고가에 매도)</td><td class="num">4,099</td><td class="num">95.9%</td><td class="num">+13.04%</td><td class="num">—</td><td class="num">102분</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>옛 규칙으로 <b>+5%에 팔린 2,281건이 그날 실제로 어디까지 갔는지</b>도 세어 봤다.</p>
+
+<div class="kpis">
+  <div class="kpi"><strong>72.6%</strong><span>익절 거래 중 그날 +10% 이상까지 간 비율</span></div>
+  <div class="kpi"><strong>+15.2%</strong><span>익절 거래의 그날 최대 상승 중앙값</span></div>
+  <div class="kpi"><strong>12.4%</strong><span>+50% 이상까지 간 비율</span></div>
+</div>
+
+<p>반대로 −2%에 털린 3,857건은 <b>털리기 전 최대 수익의 중앙값이 +1.1%</b>였고, 47.1%는 한 번도 +1%를 못 넘었다. 손절선은 노이즈에 털린 게 아니라 <b>진짜 나쁜 진입을 잘라 준 것</b>이었다. −2%는 건드리지 않기로 했다.</p>
+
+<h2>2. 그런데 1등 결과가 이상했다</h2>
+
+<p>1차 결과에서 트레일 −5%는 +63.7(PF 1.765)이 나왔다. 너무 좋았다. 이익 상위 거래를 열어 봤다.</p>
+
+<pre><code>2025-11-17 NFLX  시가 111.00 / 저가 110.40 / 종가 110.70 / 고가 1244.76   (×11)
+2024-06-10 NVDA  시가 120.18 /                 종가 120.24 / 고가 1208.88   (×10)
+2024-07-19 AVGO  시가 157.40 /                 종가 157.35 / 고가 1755.56   (×11)</code></pre>
+
+<p>NVDA 2024-06 10:1, AVGO 2024-07 10:1, NFLX 2025-11 10:1 — <b>액면분할 배수와 정확히 일치했다.</b> 분할 전 가격이 분할 후 봉에 한 건씩 새어 들어와 있었다. 나머지는 확장 세션의 얇은 호가에서 나온 오체결이었다.</p>
+
+<div class="callout callout-warn">
+  <span class="callout-k">여기서 배운 것</span>
+  <p>이 이상치는 <b>옛 청산에서는 아무 영향이 없었다.</b> 세정 전후 결과가 소수점까지 같았다. +5% 상한이 가짜 고가를 잘라 줬기 때문이다.</p>
+  <p>반면 <b>트레일링은 고점을 그대로 믿는다.</b> 한 봉에 이익이 통째로 넘어간다. 총이익의 15%가 NFLX 한 건, 절반이 상위 10건이었다. 봉 기준 발생률은 0.0067%인데 종목-일 기준으로는 약 5%다.</p>
+</div>
+
+<p>그래서 백테스터가 봉을 읽는 <b>단일 입구</b>에 세정을 넣었다. 봉을 버리지 않고 꼬리만 클램프한다 — 버리면 순서가 깨진다.</p>
+
+<pre><code>고가 상한 = max(시가, 종가, 직전 종가, 다음 시가) × 1.30
+저가 하한 = min(시가, 종가, 직전 종가, 다음 시가) × 0.70</code></pre>
+
+<p>폭 30%는 급등주의 <b>진짜</b> 1분 급등을 지우지 않으려고 넉넉히 잡았다. 세정 뒤에도 트레일링 최대 이익 거래는 +340%로 살아 있었고, 옛 청산 결과는 완전히 불변이었다 — 정상 거래를 건드리지 않았다는 증거다.</p>
+
+<p><b>세정 후 트레일 −5%: +63.7 → +38.1.</b> 40%가 가짜였다.</p>
+
+<h2>3. 청산도 모델에게 맡겨 볼까 (두 번 실패)</h2>
+
+<p>“팔 타이밍에 먹을 게 많다”면 그 판단도 모델이 하는 게 낫지 않을까. 두 번 시도했다.</p>
+
+<ul>
+  <li><b>1차 — 차트 지표만.</b> 매 1분봉마다 “30분 안에 −1%를 먼저 찍나 vs +1%를 먼저 찍나”를 학습했다. 최고 조합이 트레일링 단독보다 +3.4% 나았지만 4폴드 중 하나에서 졌다. <b>지표 33개를 매분 굴릴 값어치가 없다.</b></li>
+  <li><b>2차 — 보유 상태를 알려 주고.</b> 평단 대비 손익·고점 대비 낙폭·최대 수익·경과 시간을 넣었다. 표본 조사에서 이 정보는 분명히 신호가 있었다(고점 대비 −5% 이상 밀린 상태의 하락 확률 49.8% vs −0.5% 이내 6.3%). 그런데 <b>학습된 모델은 이걸 거의 안 썼다.</b></li>
+</ul>
+
+<pre><code>중요도 (4폴드)
+atr_pct (변동성)      63.2% / 67.4% / 69.5% / 70.7%
+보유 상태 4개 합계      5.7% /  4.9% /  4.5% /  4.3%</code></pre>
+
+<p>고정 폭 장벽(±1%)이 원인이었다. 시끄러운 종목은 1%를 금방 닿아 어느 쪽이 먼저인지가 동전던지기가 되고, 조용한 종목은 30분 안에 닿지 못한다. 결국 라벨이 묻고 있던 건 “이 종목이 지금 시끄러운가”였다. 모델이 변동성만 봐도 정답 대부분을 맞히니 보유 상태를 볼 이유가 없었다. <a href="volatility-trap">전에 한 번 빠졌던 함정</a>이 그대로 재발한 것이다.</p>
+
+<p>고치는 법은 알고 있다 — 장벽을 변동성 비례(±1×ATR)로 잡으면 된다. 삼중 장벽 기법의 표준 처방이다. 다만 여기서 <b>중단하고</b> 트레일링으로 확정했다. 얻을 게 +0.5인 싸움에 재학습 비용을 더 쓸 이유가 없었다.</p>
+
+<h2>4. 채택안</h2>
+
+<pre><code>매수 ─ 5분봉 모델 (변경 없음) · 확률 ≥ 학습 상위 1% 임계값
+       정규장 · 그날 누적 거래대금 ≥ $2M · 진입가 &gt; $1
+매도 ─ 둘 중 먼저: ① 고점 대비 −5%(트레일링)  ② 평단 대비 −2%(하드 손절)
+       익절 상한 없음 · 장 마감(20:00 ET)까지 미도달 시 청산
+물타기 ─ 없음</code></pre>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th></th><th class="num">옛 청산</th><th class="num">트레일 −5%</th></tr></thead>
+<tbody>
+<tr><td>거래</td><td class="num">6,581</td><td class="num">6,121</td></tr>
+<tr><td>승률</td><td class="num">38.3%</td><td class="num">33.6%</td></tr>
+<tr><td>거래당</td><td class="num">+0.33%</td><td class="num">+0.62%</td></tr>
+<tr class="hl"><td>PF</td><td class="num">1.239</td><td class="num">1.458</td></tr>
+<tr><td>폴드별 PF</td><td class="num">1.242 / 1.246 / 1.229 / 1.238</td><td class="num">1.437 / 1.431 / 1.510 / 1.452</td></tr>
+<tr><td>최악 1건</td><td class="num">−2.4%</td><td class="num">−2.4%</td></tr>
+<tr><td>합계</td><td class="num">+21.9</td><td class="num">+38.1</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>승률은 4.7%p 떨어진다. 간신히 +5%를 찍고 되돌아온 거래가 이김에서 짐으로 넘어가기 때문이다. 대신 이길 때의 폭이 커져 총액이 이긴다. 눈여겨볼 건 <b>최악 1건이 −2.4%로 동일</b>하다는 점이다 — 위험을 더 지는 게 아니라 이기는 거래를 안 자르는 것이다.</p>
+
+<h2>5. 그래서 앱에 넣을 때 꼭 한 것</h2>
+
+<p>§2의 사고는 백테스트만의 문제가 아니다. 실거래에서 체결가에 오체결이 한 건 오면 <b>트레일링 고점이 튀어 즉시 매도</b>가 나간다. 상한이 있던 옛 청산은 피해가 +5%에서 막혔지만 트레일링은 막아 주는 게 없다.</p>
+
+<p>그래서 앱은 직전 채택가 대비 ±30%를 벗어난 틱을 <b>다음 틱이 확인해 줄 때까지 반영하지 않는다.</b> 오체결은 한 틱으로 끝나고 진짜 급변은 다음 틱에서도 그 근처에 있으니, 대가는 최대 1틱 지연이다.</p>
+
+<h2>남은 리스크</h2>
+
+<ul>
+  <li><b>봉인 구간이 없다.</b> 2026-05~08은 <a href="sealed-test">옛 청산으로 이미 한 번 썼다</a>. 트레일링은 워크포워드 4폴드만 통과했고 독립 검증 구간이 없다.</li>
+  <li><b>집중도가 높아졌다.</b> 상위 10거래가 이익의 25.1%(옛 청산은 2.3%). 상위 10을 빼도 옛 청산보다 낫지만 잔고 곡선은 훨씬 울퉁불퉁하다.</li>
+  <li><b>체결 가정.</b> 백테스트는 장벽 가격 체결을 가정한다. 얇은 호가에서는 낙관적이다.</li>
+</ul>
+    </div>
+
+    <footer class="post-foot">
+      <p class="disclaimer">이 글의 숫자는 과거 데이터를 대상으로 한 백테스트·검증 결과예요. 미래 수익을 보장하지 않고, 투자 권유가 아닙니다. 실제 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+      <nav class="post-nav">
+        <a href="volatility-trap"><span>이전 글</span><b>AUC 0.94짜리 함정 — 방향이 아니라 변동성을 맞히고 있었다</b></a>
+        <a href="model-on-phone"><span>다음 글</span><b>LightGBM 800그루를 폰에 넣기 — 오차 0으로 대조하기</b></a>
+      </nav>
+    </footer>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand brand-footer">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" loading="lazy" />
+      SEEDTICK
+    </span>
+    <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+    <p class="footer-links"><a href="../">앱 소개로 돌아가기</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

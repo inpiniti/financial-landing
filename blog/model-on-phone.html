@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>LightGBM 800그루를 폰에 넣기 — 오차 0으로 대조하기 — SEEDTICK 기술블로그</title>
+<meta name="description" content="파이썬에서 검증한 모델과 폰에서 도는 모델이 같은 값을 낸다고 어떻게 확신하나. 트리를 평탄한 JSON으로 굽고, 지표 33개를 한 열씩 대조하고, 화면과 챗봇이 제 계산을 못 하게 막았다." />
+<meta name="theme-color" content="#f7f9fc" />
+<link rel="icon" href="../assets/favicon.png" type="image/png" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="LightGBM 800그루를 폰에 넣기 — 오차 0으로 대조하기 — SEEDTICK 기술블로그" />
+<meta property="og:description" content="파이썬에서 검증한 모델과 폰에서 도는 모델이 같은 값을 낸다고 어떻게 확신하나. 트리를 평탄한 JSON으로 굽고, 지표 33개를 한 열씩 대조하고, 화면과 챗봇이 제 계산을 못 하게 막았다." />
+<meta property="og:image" content="../assets/shots/trading.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" />
+<link rel="stylesheet" href="../styles.css" />
+<link rel="stylesheet" href="../blog.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" />
+      SEEDTICK
+    </a>
+    <nav class="nav-links">
+      <a href="./">기술블로그</a>
+      <a class="btn btn-ghost btn-sm" href="../#install">설치하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="post">
+    <header class="post-head">
+      <a class="back-link" href="./">← 기술블로그</a>
+      <h1>LightGBM 800그루를 폰에 넣기 — 오차 0으로 대조하기</h1>
+      <p class="summary">파이썬에서 검증한 모델과 폰에서 도는 모델이 같은 값을 낸다고 어떻게 확신하나. 트리를 평탄한 JSON으로 굽고, 지표 33개를 한 열씩 대조하고, 화면과 챗봇이 제 계산을 못 하게 막았다.</p>
+      <div class="post-meta">
+        <span class="tag">엔지니어링</span>
+        <time datetime="2026-08-24">2026.08.24</time>
+        <span>읽는 데 7분</span>
+      </div>
+    </header>
+
+    <div class="prose">
+<p>연구 저장소에서 통과한 숫자와 폰에서 도는 코드는 완전히 다른 두 프로그램이다. 그 사이에는 최소 세 개의 구멍이 있다. <b>모델 추론</b>, <b>지표 계산</b>, <b>입력 데이터</b>. 하나라도 어긋나면 “검증된 전략을 돌린다”는 말이 거짓이 된다.</p>
+
+<h2>1. 추론 — 트리를 평탄한 JSON으로</h2>
+
+<p>앱은 React Native다. LightGBM 런타임을 넣을 수는 없으니 학습된 부스터를 <b>순수 JS 추론기가 먹는 평탄 JSON</b>으로 내보냈다. 800그루, 2.8MB.</p>
+
+<p>중요한 건 내보내기 절차에 <b>대조를 박아 둔 것</b>이다. 내보내기 직전에 평탄화한 트리를 직접 순회해 나온 값과 <code>booster.predict</code>를 300표본으로 비교하고, <b>오차가 0이 아니면 중단</b>한다. 앱 쪽에도 고정 표본 20건이 있어서 같은 확률이 나오는지 테스트로 다시 확인한다.</p>
+
+<h2>2. 지표 — 33개 열을 한 칸씩 맞춘다</h2>
+
+<p>지표 계산은 연구 저장소(TypeScript)와 앱(TypeScript)이 별도 구현이다. 눈으로 봐서는 절대 못 맞춘다. RSI의 첫 평균을 단순으로 할지, MACD를 종가로 나눌지, 표준편차가 0일 때 null인지 0인지 — 이런 게 서른세 개 있다.</p>
+
+<p>그래서 학습 데이터셋의 <b>실제 행</b>에서 정답 Feature 벡터를 뽑아 fixture로 만들고, 앱의 계산 결과가 33개 열 전부 일치하는지 테스트한다. 특정 종목의 정규장 12시점 — 이 하나가 지표 구현, 결측 규칙, 부동소수 반올림까지 한 번에 잡는다.</p>
+
+<pre><code>python python/export_model.py --out ../financial-app/core/model/model.json
+python python/export_feature_fixture.py --date &lt;날짜&gt; --symbol &lt;티커&gt; \
+       --out ../financial-app/core/model/features.fixtures.json
+npx vitest run core/model      # 이식 대조가 통과해야 배포</code></pre>
+
+<h2>3. 입력 — 봉의 출처가 규칙이다</h2>
+
+<p>여기가 가장 미묘했다. 앱은 실시간 체결 스트림을 받고 있으니 그걸로 5분봉을 만들면 될 것 같지만, <b>그러면 안 된다.</b></p>
+
+<p>Feature 33개 중 셋이 거래량 <b>비율</b>이다. 학습에 쓴 봉의 거래량은 특정 데이터 제공자의 값(주거래소분 부분집합, 일봉의 ~54% 수준)이고, 실시간 체결량은 증권사 값이라 눈금이 다르다. 시드 봉과 실시간 봉이 한 창에 섞이면 <b>이동평균 대비 비율이 통째로 부풀어</b> 학습과 딴 값이 된다.</p>
+
+<div class="callout">
+  <span class="callout-k">그래서 정한 규약</span>
+  <ul>
+    <li>모델이 먹는 봉은 <b>처음부터 끝까지 같은 원천의 5분봉</b>. 실시간 체결로 봉을 만들지 않는다.</li>
+    <li>하루 경계는 <b>04:00 ET</b>, 표본 창은 04:00~20:00 ET. 학습이 “일 단위 독립”이었으니 거래일이 바뀌면 봉을 통째로 비운다.</li>
+    <li>서머타임은 <b>산술로</b> 계산한다. 거래일 경계가 한 시간 어긋나면 지표가 딴 날 봉과 섞인다.</li>
+    <li>봉이 모자라 이동평균이 안 나와도 <b>신호를 막지 않는다.</b> 학습 표본도 장 초반에는 그 열이 전부 결측이었고, 모델은 그 결측을 그대로 배웠다. null을 0으로 채우면 학습과 다른 입력이 된다.</li>
+  </ul>
+</div>
+
+<p>실시간 체결 스트림은 계속 쓴다 — 어느 종목이 지금 활발한지(매수 후보 선정), 발주 단가, 그리고 청산 감시. 학습된 판단에는 학습된 입력만 넣는다는 뜻이다.</p>
+
+<h2>4. 화면이 엔진과 다른 말을 하고 있었다</h2>
+
+<p>모델 판정은 5분에 한 번 백그라운드로만 돈다. 그런데 사용자는 아무 때나 차트를 열고 “왜 안 샀어?”라고 묻는다. 그때 화면이 <b>자기 방식으로 다시 계산하면</b> 엔진과 다른 답을 말하게 된다.</p>
+
+<p>실제로 겪었다. 규칙이 4선이던 시절 “그래프와 감지가 일치하지 않는다”는 보고가 있었는데, 원인이 두 겹이었다.</p>
+
+<ul>
+  <li>차트 기본 봉은 1분, 엔진은 5분 — 화면의 5선(5분)과 엔진의 5선(25분)은 <b>다른 선</b>이었다.</li>
+  <li>화면은 진행 중인 봉까지 보고, 엔진은 닫힌 봉만 봤다.</li>
+</ul>
+
+<p>모델로 갈아탄 뒤에도 같은 종류의 잔재가 남아 있었다. 차트의 판정 패널이 이미 은퇴한 4선 규칙을 현행처럼 설명하고, 챗봇은 모델 모드에서 전 종목을 “봉 부족”이라고 답하고 있었다.</p>
+
+<p>고침은 계산을 잘 맞추는 게 아니라 <b>계산할 곳을 하나로 줄이는 것</b>이었다. 판정이 필요한 세 곳(차트 패널·챗봇의 분봉 도구·챗봇의 감시목록 도구)이 전부 <code>inspectModel()</code> 하나를 부른다. 스캐너와 <b>같은 절차</b>를 태우고, 거절 사유도 같은 함수가 사람 문장으로 만든다.</p>
+
+<pre><code>ModelScanner ─┐
+차트 패널    ─┼─▶ inspectModel(bars, dailyCloses, barMinutes) ─▶ 확률 · 기준값 · 안 사는 이유
+챗봇 도구    ─┘</code></pre>
+
+<p>규칙 하나를 더 넣었다. <b>봉 주기가 모델의 주기가 아니면 확률을 내지 않는다.</b> 사용자가 차트를 1분봉으로 바꿔 놓고 물으면 “그 주기로는 판정하지 않는다”고만 답한다. 참고용 수치도 내지 않는다 — 참고용 수치가 곧 다른 답이다.</p>
+
+<h2>5. 되돌릴 수 있게 남겨 두기</h2>
+
+<p>모델로 갈아엎으면서도 4선 규칙 코드와 테스트는 지우지 않았다. 세 층(스캐너·신호 슬롯·포지션 관리)이 <b>같은 상수 하나</b>를 읽게 해서, 스위치를 내리면 “모델 신호 + 옛 청산” 같은 불일치 조합이 생기지 않고 통째로 되돌아간다.</p>
+
+<pre><code>export const MODEL_MODE = true;   // false 한 줄이면 옛 규칙으로 롤백</code></pre>
+
+<p>새 필터도 마찬가지다. <a href="trailing-exit">매수 후보 게이트</a>는 아직 검증되지 않은 필터라, 후보 수를 리스트 크기(30)로 두면 사실상 꺼진다. 그리고 게이트에 걸린 신호는 무음으로 버리지 않고 이유를 이벤트로 남긴다 — <a href="rules-to-model">무음 폐기로 한 번 크게 데였기 때문이다.</a></p>
+    </div>
+
+    <footer class="post-foot">
+      <p class="disclaimer">이 글의 숫자는 과거 데이터를 대상으로 한 백테스트·검증 결과예요. 미래 수익을 보장하지 않고, 투자 권유가 아닙니다. 실제 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+      <nav class="post-nav">
+        <a href="trailing-exit"><span>이전 글</span><b>익절 상한을 없앴더니 1.74배, 그런데 그중 40%가 가짜였다</b></a>
+      </nav>
+    </footer>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand brand-footer">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" loading="lazy" />
+      SEEDTICK
+    </span>
+    <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+    <p class="footer-links"><a href="../">앱 소개로 돌아가기</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

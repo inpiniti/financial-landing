@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>1,960만 행을 세어 보니, 지표 하나로는 아무것도 못 맞힌다 — SEEDTICK 기술블로그</title>
+<meta name="description" content="RSI 과매도, 거래량 폭발, 볼린저 돌파. 582일치 미국 주식 분봉으로 전부 세어 봤다. 그리고 필터 하나를 켜자 남아 있던 엣지마저 사라졌다." />
+<meta name="theme-color" content="#f7f9fc" />
+<link rel="icon" href="../assets/favicon.png" type="image/png" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="1,960만 행을 세어 보니, 지표 하나로는 아무것도 못 맞힌다 — SEEDTICK 기술블로그" />
+<meta property="og:description" content="RSI 과매도, 거래량 폭발, 볼린저 돌파. 582일치 미국 주식 분봉으로 전부 세어 봤다. 그리고 필터 하나를 켜자 남아 있던 엣지마저 사라졌다." />
+<meta property="og:image" content="../assets/shots/trading.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" />
+<link rel="stylesheet" href="../styles.css" />
+<link rel="stylesheet" href="../blog.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" />
+      SEEDTICK
+    </a>
+    <nav class="nav-links">
+      <a href="./">기술블로그</a>
+      <a class="btn btn-ghost btn-sm" href="../#install">설치하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="post">
+    <header class="post-head">
+      <a class="back-link" href="./">← 기술블로그</a>
+      <h1>1,960만 행을 세어 보니, 지표 하나로는 아무것도 못 맞힌다</h1>
+      <p class="summary">RSI 과매도, 거래량 폭발, 볼린저 돌파. 582일치 미국 주식 분봉으로 전부 세어 봤다. 그리고 필터 하나를 켜자 남아 있던 엣지마저 사라졌다.</p>
+      <div class="post-meta">
+        <span class="tag">데이터</span>
+        <time datetime="2026-08-21">2026.08.21</time>
+        <span>읽는 데 7분</span>
+      </div>
+    </header>
+
+    <div class="prose">
+<p>규칙을 만들기 전에 먼저 물었다. <b>사람들이 쓰는 지표에는 실제로 무엇이 있나?</b> 2023-03부터 2025-06까지 582일, 미국 거래대금·거래량 top30 종목의 분봉 <b>1,960만 행</b>을 놓고 단일 지표와 조합을 전부 세어 봤다. 라벨은 5분 뒤 수익률이다.</p>
+
+<p>중요한 건 필터 세 벌을 나란히 놓고 본 것이다.</p>
+
+<ul>
+  <li><b>A 전체</b> — 프리·정규·애프터 전부</li>
+  <li><b>B 정규장</b> — 09:31~16:00 ET만</li>
+  <li><b>C 정규장 + 감지 가능</b> — 그 시각까지 누적 거래대금 $2M 이상, 즉 <b>봇이 그 순간 실제로 볼 수 있었던 종목만</b></li>
+</ul>
+
+<h2>RSI 과매도는 반등 신호가 아니었다</h2>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>RSI14</th><th>필터</th><th class="num">n</th><th class="num">평균 5분 수익</th></tr></thead>
+<tbody>
+<tr><td>0~20</td><td>A 전체</td><td class="num">236,278</td><td class="num">+0.125%</td></tr>
+<tr><td>0~20</td><td>C 감지 가능</td><td class="num">81,929</td><td class="num">−0.009%</td></tr>
+<tr><td>80~100</td><td>A 전체</td><td class="num">245,322</td><td class="num">+0.165%</td></tr>
+<tr><td>80~100</td><td>C 감지 가능</td><td class="num">70,843</td><td class="num">+0.010%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>“과매도 반등 후보”(RSI &lt; 20이고 RSI가 오르는 중)만 따로 뽑으면 감지 가능 구간에서 평균 <b>−0.085%</b>다. 반등은커녕 마이너스다.</p>
+
+<h2>거래량 폭발도, 밴드 돌파도 마찬가지</h2>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>조건</th><th class="num">A 전체</th><th class="num">C 감지 가능</th></tr></thead>
+<tbody>
+<tr><td>거래량 20봉 평균의 5배 이상</td><td class="num">+0.113%</td><td class="num">+0.058%</td></tr>
+<tr><td>볼린저 상단 돌파(%B &gt; 1)</td><td class="num">+0.016%</td><td class="num">−0.017%</td></tr>
+<tr><td>MA20 상승 &amp; 거래량 2배 &amp; RSI 상승 &amp; %B&gt;0.8</td><td class="num">+0.097%</td><td class="num">−0.008%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>마지막 줄이 이 글의 핵심이다. 그럴듯한 4중 조합의 기대값이 <b>+0.097%에서 −0.008%로 붕괴</b>했다. 바뀐 건 조건이 아니라 <b>표본</b>뿐이다.</p>
+
+<div class="callout callout-warn">
+  <span class="callout-k">사후선택 편향</span>
+  <p>A 전체 표본에는 <b>오후에 터진 종목의 새벽 봉</b>이 들어 있다. 그 종목이 top30에 든 이유가 “그날 나중에 터져서”이기 때문이다. 그 시각에는 아무도 그 종목을 볼 수 없었는데, 통계는 그 봉을 세고 있었다.</p>
+  <p>그래서 모든 백테스트·통계에 <b>“그 시각에 감지 가능했나”</b> 필터를 강제로 켰다. 이 필터 하나가 대부분의 그럴듯한 엣지를 지운다. 지워지지 않는 게 진짜다.</p>
+</div>
+
+<h2>가격대가 지표보다 강했다</h2>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>가격대</th><th class="num">n(C)</th><th class="num">평균</th><th class="num">p10 ~ p90</th></tr></thead>
+<tbody>
+<tr><td>$0~1</td><td class="num">764,305</td><td class="num">−0.017%</td><td class="num">−2.52% ~ +2.39%</td></tr>
+<tr><td>$1~5</td><td class="num">1,271,372</td><td class="num">+0.022%</td><td class="num">−1.45% ~ +1.42%</td></tr>
+<tr><td>$5~20</td><td class="num">2,077,594</td><td class="num">+0.008%</td><td class="num">−0.52% ~ +0.53%</td></tr>
+<tr><td>$100+</td><td class="num">5,356,772</td><td class="num">+0.001%</td><td class="num">−0.22% ~ +0.22%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>$1 미만 구간은 기대값이 음수인데 변동폭만 크다. 뒤에 청산 방식을 다섯 가지로 바꿔 가며 다시 확인했을 때도 <b>$1 미만은 전부 PF &lt; 1</b>이었다. 시장에 기회가 없다는 뜻이 아니라 <b>우리 지표 33개로는 그 구간의 방향을 못 읽는다</b>는 뜻이다. 그래서 진입 하한을 $1로 고정했다.</p>
+
+<h2>그래서 무엇을 했나</h2>
+
+<p>단일 지표에 답이 없다는 게 확인됐으니, 남은 길은 두 가지였다. 지표를 조합하는 규칙을 사람이 계속 손으로 고치거나(<a href="rules-to-model">사흘 만에 무너진 그 길</a>), 조합을 데이터가 찾게 하거나.</p>
+
+<p>후자를 골랐다. 다만 <b>라벨을 잘못 잡으면 데이터도 엉뚱한 걸 배운다</b>는 걸 그다음에 알게 된다 — <a href="volatility-trap">AUC 0.94짜리 함정</a>.</p>
+
+<div class="callout">
+  <span class="callout-k">이 단계에서 정한 규약</span>
+  <ul>
+    <li>시간 분리: 학습 ~2025-06 / 검증 2025-07~2026-04 / <b>최종 테스트 2026-05~08은 봉인</b></li>
+    <li>누수 검사기: 무작위 절단점에서 “전체 계산”과 “절단 계산”이 일치해야 통과</li>
+    <li>거래량은 절대량 금지, <b>비율만</b> — 봉 거래량이 주거래소분 부분집합(일봉의 ~54%)이라 절대량은 의미가 없다</li>
+    <li>결측은 0으로 채우지 않고 <b>null 그대로</b> 넘긴다</li>
+  </ul>
+</div>
+    </div>
+
+    <footer class="post-foot">
+      <p class="disclaimer">이 글의 숫자는 과거 데이터를 대상으로 한 백테스트·검증 결과예요. 미래 수익을 보장하지 않고, 투자 권유가 아닙니다. 실제 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+      <nav class="post-nav">
+        <a href="sealed-test"><span>이전 글</span><b>봉인 구간은 한 번만 연다 — 워크포워드와 FINAL TEST</b></a>
+        <a href="rules-to-model"><span>다음 글</span><b>사람이 만든 규칙은 사흘을 못 버텼다</b></a>
+      </nav>
+    </footer>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand brand-footer">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" loading="lazy" />
+      SEEDTICK
+    </span>
+    <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+    <p class="footer-links"><a href="../">앱 소개로 돌아가기</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

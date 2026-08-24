@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>봉인 구간은 한 번만 연다 — 워크포워드와 FINAL TEST — SEEDTICK 기술블로그</title>
+<meta name="description" content="백테스트에서 좋은 숫자를 만드는 건 쉽다. 어려운 건 그 숫자를 믿을 수 있게 만드는 절차다. 최근 넉 달을 아무도 못 보게 봉인해 두고, 마지막에 한 번만 열었다." />
+<meta name="theme-color" content="#f7f9fc" />
+<link rel="icon" href="../assets/favicon.png" type="image/png" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="봉인 구간은 한 번만 연다 — 워크포워드와 FINAL TEST — SEEDTICK 기술블로그" />
+<meta property="og:description" content="백테스트에서 좋은 숫자를 만드는 건 쉽다. 어려운 건 그 숫자를 믿을 수 있게 만드는 절차다. 최근 넉 달을 아무도 못 보게 봉인해 두고, 마지막에 한 번만 열었다." />
+<meta property="og:image" content="../assets/shots/trading.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" />
+<link rel="stylesheet" href="../styles.css" />
+<link rel="stylesheet" href="../blog.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" />
+      SEEDTICK
+    </a>
+    <nav class="nav-links">
+      <a href="./">기술블로그</a>
+      <a class="btn btn-ghost btn-sm" href="../#install">설치하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="post">
+    <header class="post-head">
+      <a class="back-link" href="./">← 기술블로그</a>
+      <h1>봉인 구간은 한 번만 연다 — 워크포워드와 FINAL TEST</h1>
+      <p class="summary">백테스트에서 좋은 숫자를 만드는 건 쉽다. 어려운 건 그 숫자를 믿을 수 있게 만드는 절차다. 최근 넉 달을 아무도 못 보게 봉인해 두고, 마지막에 한 번만 열었다.</p>
+      <div class="post-meta">
+        <span class="tag">검증</span>
+        <time datetime="2026-08-21">2026.08.21</time>
+        <span>읽는 데 6분</span>
+      </div>
+    </header>
+
+    <div class="prose">
+<p>전략 연구에서 가장 흔한 사고는 과최적화다. 그리고 과최적화는 대개 <b>같은 데이터를 여러 번 본 것</b>에서 온다. 파라미터를 고르고, 결과가 나쁘면 조금 바꾸고, 다시 돌리고 — 이 과정을 열 번 반복하면 그 구간에 대한 성적은 반드시 좋아진다.</p>
+
+<p>그래서 시작할 때 시간을 세 토막으로 잘라 두었다.</p>
+
+<pre><code>Train       2023-03-06 ~ 2025-06-30   지표·라벨·학습
+Validation  2025-07-01 ~ 2026-04-30   기하 탐색, 워크포워드
+Final Test  2026-05-01 ~ 2026-08-20   봉인 — 최종 1회만</code></pre>
+
+<h2>1. 워크포워드 — 미래를 보지 않고 4번 전진</h2>
+
+<p>모델을 한 번 학습해서 전 구간을 평가하면 미래 정보가 샌다. 대신 구간을 넷으로 잘라, 매번 <b>그 시점까지의 데이터로만</b> 학습하고 그다음 구간에서 평가하며 전진했다. 임계값(“확률이 얼마 이상이면 산다”)도 매 폴드의 <b>학습 구간 분포에서만</b> 뽑았다 — 테스트 구간의 분포를 보고 문턱을 정하면 그 자체가 미래 참조다.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Feature 봉</th><th class="num">폴드 1</th><th class="num">폴드 2</th><th class="num">폴드 3</th><th class="num">폴드 4</th><th class="num">거래</th></tr></thead>
+<tbody>
+<tr><td>1분봉</td><td class="num">1.201</td><td class="num">1.162</td><td class="num">1.215</td><td class="num">1.115</td><td class="num">15,684</td></tr>
+<tr><td>3분봉</td><td class="num">1.297</td><td class="num">1.127</td><td class="num">1.232</td><td class="num">1.164</td><td class="num">8,708</td></tr>
+<tr class="hl"><td>5분봉</td><td class="num">1.242</td><td class="num">1.246</td><td class="num">1.229</td><td class="num">1.238</td><td class="num">6,581</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>5분봉을 골랐다. 최고 점수가 아니라 <b>가장 균일해서</b>다. 3분봉의 폴드 1(1.297)이 더 높지만 폴드 2에서 1.127로 내려앉는다. 1분봉은 가장 최근 폴드에서 1.115로 열화한다. 균일하지 않은 성적은 “운이 좋았던 구간이 있다”는 뜻이고, 실전은 늘 다음 구간이다.</p>
+
+<p>덤: 이 판정은 앱의 실거래 관찰(<a href="rules-to-model">“긴 봉이 낫다”</a>)과 같은 방향이었다. 서로 다른 두 방법이 같은 답을 내면 조금 더 믿을 만하다.</p>
+
+<h2>2. FINAL TEST — 승인받고, 한 번만</h2>
+
+<p>봉인 구간을 여는 건 되돌릴 수 없는 행동이다. 한 번 보면 그 구간은 더 이상 “본 적 없는 데이터”가 아니고, 결과가 나빠서 뭔가 고치는 순간 그냥 또 하나의 검증 구간이 된다. 그래서 스크립트를 따로 만들고 <b>사용자 승인을 받아 1회만</b> 실행했다.</p>
+
+<div class="kpis">
+  <div class="kpi"><strong>3,116</strong><span>거래 (2026-05-01~08-20)</span></div>
+  <div class="kpi"><strong>39.2%</strong><span>승률</span></div>
+  <div class="kpi"><strong>+0.42%</strong><span>거래당 순손익 (비용 반영)</span></div>
+  <div class="kpi"><strong>1.301</strong><span>Profit Factor · 4개월 전부 플러스</span></div>
+</div>
+
+<p>같이 기록해야 할 숫자도 있다. <b>12연패가 실측됐다.</b> 기대값이 플러스인 전략에서도 연속 손실은 온다. 포지션 크기는 한 번의 −2%가 계좌에 감당되는 수준이어야 한다는 결론이 여기서 나왔다.</p>
+
+<h2>3. 통과했다고 끝난 게 아니다</h2>
+
+<p>결과 문서에 <b>남은 리스크</b>를 같이 적었다. 백테스트가 답할 수 없는 것들이다.</p>
+
+<ul>
+  <li><b>비용 모델이 추정치다.</b> 실제 스프레드·슬리피지는 소액 실거래로만 확인된다.</li>
+  <li><b>체결 가정이 낙관적이다.</b> 장벽 가격에 체결된다고 가정했다. 얇은 호가에서는 아니다.</li>
+  <li><b>자본 제약이 없다.</b> 신호 봉마다 전 종목 동시 보유를 가정했다. 앱은 동시 종목 수와 현금에 묶인다.</li>
+  <li><b>유니버스가 다르다.</b> 백테스트 신호는 종가 데이터로 재구성한 top30, 앱은 실시간 순위다.</li>
+  <li><b>재학습이 전제다.</b> 워크포워드는 반년 주기 재학습을 가정하고 통과했다. 앱의 모델은 고정이라 주기적으로 교체해야 한다.</li>
+</ul>
+
+<div class="callout">
+  <span class="callout-k">덧붙임</span>
+  <p>이 FINAL TEST는 <b>옛 청산(+5% 상한)</b> 기준이다. 그 뒤 <a href="trailing-exit">청산을 트레일링으로 바꿨는데</a>, 봉인 구간은 이미 소진돼 트레일링에는 독립 검증 구간이 없다. 워크포워드 4폴드만 통과한 상태라는 걸 그대로 적어 두었다.</p>
+  <p>봉인 구간을 한 번만 쓴다는 규칙의 대가다. 다음 봉인 구간은 시간이 만들어 준다.</p>
+</div>
+    </div>
+
+    <footer class="post-foot">
+      <p class="disclaimer">이 글의 숫자는 과거 데이터를 대상으로 한 백테스트·검증 결과예요. 미래 수익을 보장하지 않고, 투자 권유가 아닙니다. 실제 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+      <nav class="post-nav">
+        <a href="indicator-myth"><span>다음 글</span><b>1,960만 행을 세어 보니, 지표 하나로는 아무것도 못 맞힌다</b></a>
+      </nav>
+    </footer>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand brand-footer">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" loading="lazy" />
+      SEEDTICK
+    </span>
+    <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+    <p class="footer-links"><a href="../">앱 소개로 돌아가기</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SEEDTICK 기술블로그</title>
+<meta name="description" content="자동 트레이딩 앱 SEEDTICK을 만들며 한 실험과 실패의 기록. 지표 통계, 라벨 설계, 워크포워드 검증, 모델을 폰에 이식하기까지." />
+<meta name="theme-color" content="#f7f9fc" />
+<link rel="icon" href="../assets/favicon.png" type="image/png" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="SEEDTICK 기술블로그" />
+<meta property="og:description" content="자동 트레이딩 앱 SEEDTICK을 만들며 한 실험과 실패의 기록. 지표 통계, 라벨 설계, 워크포워드 검증, 모델을 폰에 이식하기까지." />
+<meta property="og:image" content="../assets/shots/trading.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" />
+<link rel="stylesheet" href="../styles.css" />
+<link rel="stylesheet" href="../blog.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" />
+      SEEDTICK
+    </a>
+    <nav class="nav-links">
+      <a href="./">기술블로그</a>
+      <a class="btn btn-ghost btn-sm" href="../#install">설치하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="blog-hero">
+    <div class="wrap">
+      <p class="eyebrow">기술블로그</p>
+      <h1>재현할 수 있는 것만 규칙이 된다</h1>
+      <p class="lead">개인 자동 트레이딩 앱 <a href="../" style="color:var(--primary);font-weight:700">SEEDTICK</a>을 만들며 한 실험을 그대로 적습니다.
+      통과한 것보다 <b>폐기한 것</b>이 많고, 폐기한 이유가 대체로 더 쓸모 있었습니다.</p>
+    </div>
+  </section>
+
+  <section class="post-list">
+    <div class="wrap">
+      <div class="list-head">
+        <h2>전체 글</h2>
+        <span>6편</span>
+      </div>
+      <div class="post-cards">
+        <a class="post-card" href="model-on-phone">
+          <span class="tag">엔지니어링</span>
+          <h3>LightGBM 800그루를 폰에 넣기 — 오차 0으로 대조하기</h3>
+          <p>파이썬에서 검증한 모델과 폰에서 도는 모델이 같은 값을 낸다고 어떻게 확신하나. 트리를 평탄한 JSON으로 굽고, 지표 33개를 한 열씩 대조하고, 화면과 챗봇이 제 계산을 못 하게 막았다.</p>
+          <time datetime="2026-08-24">2026.08.24 · 읽는 데 7분</time>
+        </a>
+        <a class="post-card" href="trailing-exit">
+          <span class="tag">전략</span>
+          <h3>익절 상한을 없앴더니 1.74배, 그런데 그중 40%가 가짜였다</h3>
+          <p>“+5%에 파는 게 이상하지 않나”라는 한마디에서 시작해 청산만 바꿔 4폴드를 다시 돌렸다. 답은 트레일링이었고, 그 답을 믿기 전에 액면분할 잔재 한 봉을 먼저 잡아야 했다.</p>
+          <time datetime="2026-08-24">2026.08.24 · 읽는 데 8분</time>
+        </a>
+        <a class="post-card" href="volatility-trap">
+          <span class="tag">머신러닝</span>
+          <h3>AUC 0.94짜리 함정 — 방향이 아니라 변동성을 맞히고 있었다</h3>
+          <p>검증 점수가 잘 나오면 기뻐하기 전에 중요도를 먼저 열어 봐야 한다. 같은 실수를 두 번 했고, 두 번 다 원인은 모델이 아니라 라벨이었다.</p>
+          <time datetime="2026-08-24">2026.08.24 · 읽는 데 6분</time>
+        </a>
+        <a class="post-card" href="rules-to-model">
+          <span class="tag">전략</span>
+          <h3>사람이 만든 규칙은 사흘을 못 버텼다</h3>
+          <p>이동평균 4선으로 시작해 필터를 넷 붙이고, 규칙을 순수하게 되돌리고, 봉 주기를 세 번 바꿨다. 매일 실거래 기록을 재현하며 고쳤는데도 사흘치 데이터로는 아무것도 확정할 수 없었다.</p>
+          <time datetime="2026-08-22">2026.08.22 · 읽는 데 9분</time>
+        </a>
+        <a class="post-card" href="indicator-myth">
+          <span class="tag">데이터</span>
+          <h3>1,960만 행을 세어 보니, 지표 하나로는 아무것도 못 맞힌다</h3>
+          <p>RSI 과매도, 거래량 폭발, 볼린저 돌파. 582일치 미국 주식 분봉으로 전부 세어 봤다. 그리고 필터 하나를 켜자 남아 있던 엣지마저 사라졌다.</p>
+          <time datetime="2026-08-21">2026.08.21 · 읽는 데 7분</time>
+        </a>
+        <a class="post-card" href="sealed-test">
+          <span class="tag">검증</span>
+          <h3>봉인 구간은 한 번만 연다 — 워크포워드와 FINAL TEST</h3>
+          <p>백테스트에서 좋은 숫자를 만드는 건 쉽다. 어려운 건 그 숫자를 믿을 수 있게 만드는 절차다. 최근 넉 달을 아무도 못 보게 봉인해 두고, 마지막에 한 번만 열었다.</p>
+          <time datetime="2026-08-21">2026.08.21 · 읽는 데 6분</time>
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand brand-footer">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" loading="lazy" />
+      SEEDTICK
+    </span>
+    <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+    <p class="footer-links"><a href="../">앱 소개로 돌아가기</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
