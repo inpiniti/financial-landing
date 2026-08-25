@@ -662,6 +662,22 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-links > a:not(.btn):hover { background: rgba(25, 31, 40, 0.05); color: var(--text); }
 
+@media (max-width: 640px) {
+  /* 링크가 4개라 좁은 화면에서는 가로 스크롤로 풀어요 */
+  .nav-inner { gap: 8px; }
+  .nav-links {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links > a { flex: 0 0 auto; white-space: nowrap; }
+  .nav-links > :first-child { margin-left: auto; }
+  .nav-links > a:not(.btn) { padding: 8px 10px; font-size: 0.875rem; }
+}
+
 /* ── post cards (랜딩 티저 · 블로그 목록 공용) ────── */
 .post-cards {
   margin-top: 32px;

@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SEEDTICK 데이터 분석</title>
+<meta name="description" content="진입 모델이 지금 모습이 되기까지의 백테스트 기록을 차트로 보여드려요. 완패했던 첫 시도부터 봉인 구간 최종 검증까지, 실제 실험 결과 그대로예요." />
+<meta name="theme-color" content="#f7f9fc" />
+<link rel="icon" href="../assets/favicon.png" type="image/png" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="SEEDTICK 데이터 분석" />
+<meta property="og:description" content="진입 모델이 지금 모습이 되기까지의 백테스트 기록을 차트로 보여드려요." />
+<meta property="og:image" content="../assets/shots/trading.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+/* ── 데이터 분석 페이지 전용 ─────────────────────── */
+.da-hero { padding: 48px 0 8px; }
+.da-hero h1 { font-size: clamp(1.625rem, 4vw, 2.25rem); font-weight: 800; }
+
+.da-section { padding: 40px 0 0; }
+.da-section:last-of-type { padding-bottom: 88px; }
+.da-section h2 { font-size: 1.375rem; font-weight: 800; }
+.da-section .sec-sub { margin-top: 8px; color: var(--text-2); font-size: 0.9375rem; max-width: 62ch; }
+
+.da-card {
+  margin-top: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+.da-card figure { margin: 0; }
+.da-card figcaption { margin-top: 14px; color: var(--text-3); font-size: 0.8125rem; line-height: 1.5; }
+.da-card figcaption b { color: var(--text-2); }
+
+.chart-wrap { overflow-x: auto; }
+.chart-wrap svg { display: block; width: 100%; height: auto; min-width: 520px; }
+
+/* SVG 공통 */
+.ax-line { stroke: var(--line); stroke-width: 1; }
+.ax-label { fill: var(--text-3); font-size: 11px; }
+.ax-label-strong { fill: var(--text-2); font-size: 11.5px; font-weight: 700; }
+.grid-line { stroke: #eef1f5; stroke-width: 1; }
+.ref-line { stroke: #8b95a1; stroke-width: 1; stroke-dasharray: 4 4; }
+.ref-label { fill: var(--text-3); font-size: 10.5px; font-weight: 600; }
+.val-label { fill: var(--text-2); font-size: 11.5px; font-weight: 700; }
+.val-label-hero { fill: var(--text); font-size: 13px; font-weight: 800; }
+
+/* 범례 */
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 0.8125rem; font-weight: 600; }
+.legend i { width: 12px; height: 12px; border-radius: 4px; }
+
+/* 스탯 타일 */
+.da-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 20px;
+}
+.da-stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px 16px;
+  box-shadow: var(--shadow);
+}
+.da-stat strong { display: block; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.da-stat span { display: block; margin-top: 2px; color: var(--text-3); font-size: 0.8125rem; }
+
+/* 채택 배지 */
+.pick-badge { fill: var(--primary); font-size: 10.5px; font-weight: 800; }
+
+/* 표로 보기 */
+details.tbl { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+details.tbl summary {
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 0.875rem;
+  font-weight: 700;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}
+details.tbl summary::-webkit-details-marker { display: none; }
+details.tbl summary::after { content: "▾"; color: var(--text-3); transition: transform 0.15s ease; }
+details.tbl[open] summary::after { transform: rotate(180deg); }
+details.tbl table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; margin-top: 6px; }
+details.tbl th, details.tbl td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #eef1f5; font-variant-numeric: tabular-nums; }
+details.tbl th:first-child, details.tbl td:first-child { text-align: left; }
+details.tbl thead th { color: var(--text-3); font-size: 0.75rem; font-weight: 700; }
+
+/* 툴팁 */
+#tip {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  background: #191f28;
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  box-shadow: 0 6px 20px rgba(23, 31, 46, 0.25);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  max-width: 260px;
+}
+#tip.on { opacity: 1; }
+#tip b { font-weight: 800; }
+#tip small { color: #8b95a1; font-size: 0.75rem; }
+
+/* 출처 · 주의 */
+.da-note {
+  margin-top: 40px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid #ffd9dc;
+  background: #fff2f3;
+  color: #c9313e;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.da-src { margin-top: 16px; color: var(--text-3); font-size: 0.8125rem; line-height: 1.6; }
+.da-src code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.75rem; background: #eef1f5; border-radius: 6px; padding: 1px 6px; }
+
+@media (max-width: 900px) { .da-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px) {
+  .da-card { padding: 20px 16px; }
+  .da-stats { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" />
+      SEEDTICK
+    </a>
+    <nav class="nav-links">
+      <a href="../analysis/">간단분석</a>
+      <a href="./">데이터 분석</a>
+      <a href="../blog/">기술블로그</a>
+      <a class="btn btn-ghost btn-sm" href="../#install">설치하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="da-hero">
+    <div class="wrap">
+      <p class="eyebrow">데이터 분석</p>
+      <h1>모델이 지금 모습이 되기까지</h1>
+      <p class="lead">3년 반치 미국 주식 분봉으로 돌린 백테스트 기록을 차트로 모았어요.
+      완패했던 첫 시도부터 봉인 구간 최종 검증까지, 실험 결과 숫자 그대로예요.</p>
+    </div>
+  </section>
+
+  <!-- 1. 연구 발전 타임라인 -->
+  <section class="da-section">
+    <div class="wrap">
+      <h2>완패에서 시작해 여기까지 왔어요</h2>
+      <p class="sec-sub">Profit Factor(총이익 ÷ 총손실)로 본 단계별 성적이에요. 1.0이 손익분기 —
+      아래면 잃는 전략, 위면 남는 전략이에요. 처음 "신호 상위 1%를 그냥 담는" 시도는 비용에 완패했고,
+      검증 방법과 Feature를 다듬으면서 조금씩 올라왔어요.</p>
+      <div class="da-card">
+        <figure>
+          <div class="chart-wrap" id="chart-journey" role="img" aria-label="단계별 Profit Factor 막대 차트. 첫 백테스트 0.53에서 최종 검증 1.30까지 상승"></div>
+          <figcaption>각 단계에서 무엇을 바꿨는지는 막대를 누르거나 마우스를 올리면 볼 수 있어요.
+          워크포워드는 4개 반기 폴드 평균이에요.</figcaption>
+        </figure>
+        <details class="tbl">
+          <summary>표로 보기</summary>
+          <table id="tbl-journey"></table>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Feature 봉 간격 비교 -->
+  <section class="da-section">
+    <div class="wrap">
+      <h2>왜 5분봉을 골랐을까요</h2>
+      <p class="sec-sub">같은 라벨·같은 기간·같은 비용에서 Feature를 계산하는 봉 간격만 바꿔
+      워크포워드 4개 폴드를 다시 돌렸어요. 5분봉은 네 폴드 성적이 고르게 나왔고,
+      1분봉은 최근 구간(폴드 4)에서 무너졌어요.</p>
+      <div class="da-card">
+        <figure>
+          <div class="legend" id="legend-folds"></div>
+          <div class="chart-wrap" id="chart-folds" role="img" aria-label="폴드별 Profit Factor 선 차트. 5분봉은 1.23에서 1.25 사이로 고르고, 1분봉은 폴드 4에서 1.12로 하락"></div>
+          <figcaption>폴드는 반년 단위 검증 구간이에요(2024-07 ~ 2026-04). <b>5분봉 Feature를 채택</b>했고,
+          지금 앱이 쓰는 기본형이에요.</figcaption>
+        </figure>
+        <details class="tbl">
+          <summary>표로 보기</summary>
+          <table id="tbl-folds"></table>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. FINAL TEST -->
+  <section class="da-section">
+    <div class="wrap">
+      <h2>봉인해 뒀던 구간에서 최종 검증했어요</h2>
+      <p class="sec-sub">모델을 만드는 동안 한 번도 들여다보지 않은 2026-05 ~ 08-20 구간에
+      완성본을 딱 한 번 돌렸어요. 여기서 실패하면 되돌릴 기회가 없는 시험이었어요.</p>
+
+      <div class="da-stats">
+        <div class="da-stat"><strong>3,116회</strong><span>거래</span></div>
+        <div class="da-stat"><strong>39.2%</strong><span>승률</span></div>
+        <div class="da-stat"><strong>+0.42%</strong><span>거래당 순수익</span></div>
+        <div class="da-stat"><strong>1.301</strong><span>Profit Factor</span></div>
+        <div class="da-stat"><strong>12연패</strong><span>최대 연속 손실</span></div>
+      </div>
+
+      <div class="da-card">
+        <figure>
+          <div class="chart-wrap" id="chart-monthly" role="img" aria-label="월별 거래당 평균 순수익 막대 차트. 2026년 5월부터 8월까지 네 달 모두 플러스"></div>
+          <figcaption>네 달 모두 플러스였어요. 승률이 39%인데 남는 이유는
+          이길 때 +4.6%, 질 때 −2.3%로 <b>이길 때 더 크게 이기는 구조</b>이기 때문이에요.</figcaption>
+        </figure>
+        <details class="tbl">
+          <summary>표로 보기</summary>
+          <table id="tbl-monthly"></table>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 청산 연구 -->
+  <section class="da-section">
+    <div class="wrap">
+      <h2>"+5%면 판다"를 버린 이유</h2>
+      <p class="sec-sub">원래는 +5% 익절 고정이었어요. 그런데 +5%에 판 거래들이 그날 실제로
+      어디까지 올랐는지 세어 보니, 너무 일찍 팔고 있었어요.</p>
+      <div class="da-card">
+        <figure>
+          <div class="chart-wrap" id="chart-upside" role="img" aria-label="+5% 익절로 판 거래 2,281건이 그날 기록한 최대 상승폭 분포. 72.6%가 +10% 이상까지 상승"></div>
+          <figcaption>+5%에 판 2,281건 중 <b>72.6%가 그날 +10% 이상</b>까지 갔어요(중앙값 +15.2%).
+          그래서 익절 상한을 없애고, 고점에서 −5% 밀리면 파는 트레일링으로 바꿨어요.</figcaption>
+        </figure>
+        <details class="tbl">
+          <summary>표로 보기</summary>
+          <table id="tbl-upside"></table>
+        </details>
+      </div>
+
+      <div class="da-card">
+        <figure>
+          <div class="chart-wrap" id="chart-exit" role="img" aria-label="청산 방식별 거래당 순수익 가로 막대 차트. 트레일링 마이너스 5퍼센트가 플러스 0.62퍼센트로 채택"></div>
+          <figcaption>진입 신호는 똑같이 두고 청산만 바꿔 4개 폴드를 비교했어요.
+          "마감까지 홀드"가 수치는 비슷하지만 수익의 54%가 상위 10건에 몰려 있어 탈락했고,
+          <b>트레일링 −5%를 채택</b>했어요. 손절 −2%는 나쁜 진입을 자르는 역할이라 그대로 뒀어요.</figcaption>
+        </figure>
+        <details class="tbl">
+          <summary>표로 보기</summary>
+          <table id="tbl-exit"></table>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 주의 · 출처 -->
+  <section class="da-section">
+    <div class="wrap">
+      <div class="da-note">
+        <strong>이 숫자들은 모두 과거 데이터 백테스트예요.</strong> 미래 수익을 보장하지 않아요.
+        수수료·슬리피지는 추정치라 실제 매매와 다를 수 있고, 최종 검증(PF 1.301)은 당시의
+        +5%/−2% 고정 청산 기준이에요. 지금 앱이 쓰는 트레일링 청산은 그 뒤 별도 연구로 채택했고,
+        실전 성적은 페이퍼 트레이딩으로 계속 재고 있어요.
+      </div>
+      <p class="da-src">출처 — 분석 저장소의 실험 산출물:
+        <code>phase5_backtest_top1pct.json</code> ·
+        <code>phase6_walkforward*.json</code> ·
+        <code>FINAL_TEST_result.json</code> ·
+        <code>phaseA_exit_study_clean.json</code> ·
+        청산 연구 문서(2026-08-24). 끝난 실험의 기록이라 자동으로 갱신되지 않아요.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand brand-footer">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" loading="lazy" />
+      SEEDTICK
+    </span>
+    <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+    <p class="footer-links"><a href="../">앱 소개로 돌아가기</a> · <a href="../analysis/">간단분석</a> · <a href="../blog/">기술블로그</a></p>
+  </div>
+</footer>
+
+<div id="tip" role="presentation"></div>
+
+<script>
+// 데이터는 financial-analyze 저장소의 실험 결과 JSON에서 손으로 옮겨 적은 값이에요.
+// 끝난(봉인된) 실험의 기록이라 갱신할 일이 없고, 그래서 API 없이 정적으로 실어요.
+
+const C = { blue: '#3182f6', orange: '#eb6834', aqua: '#1baf7a', text2: '#4e5968', muted: '#c7d3e2' };
+
+// 1. 연구 발전 타임라인 (Profit Factor)
+const JOURNEY = [
+  { name: '첫 백테스트', pf: 0.532, desc: '신호 상위 1%를 그냥 담기 — 비용에 완패했어요' },
+  { name: '워크포워드 (1분봉)', pf: 1.173, desc: '반년 단위 4폴드 재학습 검증 — 처음으로 전 구간 플러스 (폴드별 1.115~1.215)' },
+  { name: '5분봉 Feature 채택', pf: 1.239, desc: '봉 간격 실험에서 가장 고른 성적 (폴드별 1.229~1.246)' },
+  { name: '최종 검증 (봉인 구간)', pf: 1.301, desc: '한 번도 안 본 2026-05~08 구간에 단 1회 실행' },
+];
+
+// 2. 워크포워드 폴드별 PF — phase6_walkforward{,_3m,_5m}.json
+const FOLDS = {
+  labels: ['폴드 1\n2024 하반기', '폴드 2\n2025 상반기', '폴드 3\n2025 하반기', '폴드 4\n2026 초'],
+  series: [
+    { name: '5분봉 (채택)', color: C.blue,   pf: [1.242, 1.246, 1.229, 1.238] },
+    { name: '3분봉',        color: C.orange, pf: [1.297, 1.127, 1.232, 1.164] },
+    { name: '1분봉',        color: C.aqua,   pf: [1.201, 1.162, 1.215, 1.115] },
+  ],
+};
+
+// 3. FINAL TEST 월별 — FINAL_TEST_result.json monthly (sum_ret ÷ trades)
+const MONTHLY = [
+  { name: '2026년 5월', trades: 795,  avg: 0.562 },
+  { name: '2026년 6월', trades: 1025, avg: 0.186 },
+  { name: '2026년 7월', trades: 745,  avg: 0.513 },
+  { name: '2026년 8월', trades: 551,  avg: 0.519 },
+];
+
+// 4a. +5% 익절 거래의 그날 최대 상승폭 분포 (2,281건)
+const UPSIDE = [
+  { name: '+5~10%',   pct: 27.4 },
+  { name: '+10~20%',  pct: 33.7 },
+  { name: '+20~50%',  pct: 26.5 },
+  { name: '+50~100%', pct: 9.2 },
+  { name: '+100% 이상', pct: 3.2 },
+];
+
+// 4b. 청산 방식별 거래당 순수익 (%) — phaseA (진입 동일, 4폴드 합산)
+const EXITS = [
+  { name: '+5% 익절 고정 (기존)', ret: 0.33, pf: 1.239, pick: false },
+  { name: '트레일링 −1.5%',       ret: 0.20, pf: 1.292, pick: false },
+  { name: '트레일링 −3%',         ret: 0.48, pf: 1.450, pick: false },
+  { name: '트레일링 −5%',         ret: 0.62, pf: 1.458, pick: true },
+  { name: '마감까지 홀드',        ret: 0.63, pf: 1.332, pick: false, note: '수익 54%가 상위 10건에 집중돼 탈락' },
+];
+
+// ── 공통 헬퍼 ─────────────────────────────────────
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const svgEl = (w, h, inner) =>
+  `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${inner}</svg>`;
+
+// 막대 상단만 둥글게 (r=4)
+function topRoundBar(x, y, w, h, fill, attrs = '') {
+  const r = Math.min(4, h);
+  return `<path d="M${x} ${y + h} V${y + r} Q${x} ${y} ${x + r} ${y} H${x + w - r} Q${x + w} ${y} ${x + w} ${y + r} V${y + h} Z" fill="${fill}" ${attrs}/>`;
+}
+function rightRoundBar(x, y, w, h, fill, attrs = '') {
+  const r = Math.min(4, w);
+  return `<path d="M${x} ${y} H${x + w - r} Q${x + w} ${y} ${x + w} ${y + r} V${y + h - r} Q${x + w} ${y + h} ${x + w - r} ${y + h} H${x} Z" fill="${fill}" ${attrs}/>`;
+}
+const tipAttr = (html) => `data-tip="${esc(html)}"`;
+
+// 1. 타임라인 막대
+function renderJourney() {
+  const W = 720, H = 320, top = 34, bottom = 64, left = 16, right = 16;
+  const plotH = H - top - bottom, plotW = W - left - right;
+  const yMax = 1.45;
+  const y = (v) => top + plotH * (1 - v / yMax);
+  const n = JOURNEY.length, slot = plotW / n, barW = 64;
+  let s = '';
+  // 그리드 + 손익분기선
+  [0.5, 1.0].forEach((v) => {
+    if (v !== 1.0) s += `<line class="grid-line" x1="${left}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}"/>`;
+  });
+  s += `<line class="ref-line" x1="${left}" x2="${W - right}" y1="${y(1)}" y2="${y(1)}"/>`;
+  s += `<text class="ref-label" x="${left + 2}" y="${y(1) - 6}">손익분기 PF 1.0</text>`;
+  JOURNEY.forEach((d, i) => {
+    const cx = left + slot * i + slot / 2, x = cx - barW / 2;
+    const barY = y(d.pf), h = y(0) - barY;
+    const hero = i === n - 1;
+    s += topRoundBar(x, barY, barW, h, hero ? C.blue : C.muted,
+      tipAttr(`<b>${d.name}</b> · PF ${d.pf.toFixed(2)}<br><small>${d.desc}</small>`));
+    s += `<text class="${hero ? 'val-label-hero' : 'val-label'}" x="${cx}" y="${barY - 8}" text-anchor="middle">${d.pf.toFixed(2)}</text>`;
+    const lines = d.name.split(' (');
+    s += `<text class="ax-label-strong" x="${cx}" y="${H - bottom + 20}" text-anchor="middle">${esc(lines[0])}</text>`;
+    if (lines[1]) s += `<text class="ax-label" x="${cx}" y="${H - bottom + 36}" text-anchor="middle">(${esc(lines[1])}</text>`;
+  });
+  s += `<line class="ax-line" x1="${left}" x2="${W - right}" y1="${y(0)}" y2="${y(0)}"/>`;
+  document.getElementById('chart-journey').innerHTML = svgEl(W, H, s);
+  document.getElementById('tbl-journey').innerHTML =
+    '<thead><tr><th>단계</th><th>Profit Factor</th><th>무엇을 했나</th></tr></thead><tbody>' +
+    JOURNEY.map((d) => `<tr><td>${d.name}</td><td>${d.pf.toFixed(3)}</td><td style="text-align:left">${d.desc}</td></tr>`).join('') +
+    '</tbody>';
+}
+
+// 2. 폴드별 PF 선 차트
+function renderFolds() {
+  const W = 720, H = 300, top = 20, bottom = 52, left = 52, right = 96;
+  const plotH = H - top - bottom, plotW = W - left - right;
+  const yMin = 1.05, yMax = 1.32;
+  const y = (v) => top + plotH * (1 - (v - yMin) / (yMax - yMin));
+  const x = (i) => left + (plotW / (FOLDS.labels.length - 1)) * i;
+  let s = '';
+  [1.1, 1.2, 1.3].forEach((v) => {
+    s += `<line class="grid-line" x1="${left}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}"/>`;
+    s += `<text class="ax-label" x="${left - 8}" y="${y(v) + 4}" text-anchor="end">${v.toFixed(1)}</text>`;
+  });
+  FOLDS.labels.forEach((lab, i) => {
+    const [l1, l2] = lab.split('\n');
+    s += `<text class="ax-label-strong" x="${x(i)}" y="${H - bottom + 22}" text-anchor="middle">${esc(l1)}</text>`;
+    s += `<text class="ax-label" x="${x(i)}" y="${H - bottom + 38}" text-anchor="middle">${esc(l2)}</text>`;
+  });
+  // 채택 계열이 맨 위에 오도록 역순으로 그려요
+  [...FOLDS.series].reverse().forEach((ser) => {
+    const pts = ser.pf.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+    s += `<polyline points="${pts}" fill="none" stroke="${ser.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    ser.pf.forEach((v, i) => {
+      s += `<circle cx="${x(i)}" cy="${y(v)}" r="4.5" fill="${ser.color}" stroke="#fff" stroke-width="2" ${tipAttr(`<b>${ser.name}</b><br>${FOLDS.labels[i].replace('\n', ' · ')} · PF ${v.toFixed(3)}`)}/>`;
+    });
+    const last = ser.pf[ser.pf.length - 1];
+    s += `<text x="${x(3) + 12}" y="${y(last) + 4}" fill="${ser.color}" font-size="11.5" font-weight="700">${esc(ser.name)}</text>`;
+  });
+  s += `<line class="ax-line" x1="${left}" x2="${W - right}" y1="${top + plotH}" y2="${top + plotH}"/>`;
+  document.getElementById('chart-folds').innerHTML = svgEl(W, H, s);
+  document.getElementById('legend-folds').innerHTML =
+    FOLDS.series.map((ser) => `<span><i style="background:${ser.color}"></i>${ser.name}</span>`).join('');
+  document.getElementById('tbl-folds').innerHTML =
+    '<thead><tr><th>검증 구간</th>' + FOLDS.series.map((ser) => `<th>${ser.name}</th>`).join('') + '</tr></thead><tbody>' +
+    FOLDS.labels.map((lab, i) =>
+      `<tr><td>${lab.replace('\n', ' · ')}</td>` + FOLDS.series.map((ser) => `<td>${ser.pf[i].toFixed(3)}</td>`).join('') + '</tr>').join('') +
+    '</tbody>';
+}
+
+// 3. 월별 거래당 평균 순수익
+function renderMonthly() {
+  const W = 720, H = 280, top = 34, bottom = 48, left = 16, right = 16;
+  const plotH = H - top - bottom, plotW = W - left - right;
+  const yMax = 0.7;
+  const y = (v) => top + plotH * (1 - v / yMax);
+  const n = MONTHLY.length, slot = plotW / n, barW = 72;
+  let s = '';
+  [0.2, 0.4, 0.6].forEach((v) => {
+    s += `<line class="grid-line" x1="${left}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}"/>`;
+  });
+  MONTHLY.forEach((d, i) => {
+    const cx = left + slot * i + slot / 2, x = cx - barW / 2;
+    const barY = y(d.avg), h = y(0) - barY;
+    s += topRoundBar(x, barY, barW, h, C.blue,
+      tipAttr(`<b>${d.name}</b><br>거래당 평균 +${d.avg.toFixed(2)}% · ${d.trades.toLocaleString()}회 거래`));
+    s += `<text class="val-label" x="${cx}" y="${barY - 8}" text-anchor="middle">+${d.avg.toFixed(2)}%</text>`;
+    s += `<text class="ax-label-strong" x="${cx}" y="${H - bottom + 20}" text-anchor="middle">${esc(d.name)}</text>`;
+    s += `<text class="ax-label" x="${cx}" y="${H - bottom + 36}" text-anchor="middle">${d.trades.toLocaleString()}회</text>`;
+  });
+  s += `<line class="ax-line" x1="${left}" x2="${W - right}" y1="${y(0)}" y2="${y(0)}"/>`;
+  document.getElementById('chart-monthly').innerHTML = svgEl(W, H, s);
+  document.getElementById('tbl-monthly').innerHTML =
+    '<thead><tr><th>월</th><th>거래 수</th><th>거래당 평균 순수익</th></tr></thead><tbody>' +
+    MONTHLY.map((d) => `<tr><td>${d.name}</td><td>${d.trades.toLocaleString()}회</td><td>+${d.avg.toFixed(2)}%</td></tr>`).join('') +
+    '</tbody>';
+}
+
+// 4a. 익절 후 상승폭 분포 (가로 막대)
+function renderUpside() {
+  const W = 720, rowH = 44, top = 8, left = 110, right = 70;
+  const H = top + UPSIDE.length * rowH + 8;
+  const plotW = W - left - right, xMax = 40;
+  let s = '';
+  UPSIDE.forEach((d, i) => {
+    const yMid = top + rowH * i + rowH / 2;
+    const w = Math.max(2, (d.pct / xMax) * plotW);
+    const beyond = i > 0; // +10% 이상 구간 강조
+    s += `<text class="ax-label-strong" x="${left - 10}" y="${yMid + 4}" text-anchor="end">${esc(d.name)}</text>`;
+    s += rightRoundBar(left, yMid - 11, w, 22, beyond ? C.blue : C.muted,
+      tipAttr(`<b>${d.name}</b>까지 상승 · 전체의 ${d.pct}%`));
+    s += `<text class="val-label" x="${left + w + 8}" y="${yMid + 4}">${d.pct}%</text>`;
+  });
+  s += `<line class="ax-line" x1="${left}" x2="${left}" y1="${top}" y2="${H - 8}"/>`;
+  document.getElementById('chart-upside').innerHTML = svgEl(W, H, s);
+  document.getElementById('tbl-upside').innerHTML =
+    '<thead><tr><th>그날 최대 상승폭</th><th>비율</th></tr></thead><tbody>' +
+    UPSIDE.map((d) => `<tr><td>${d.name}</td><td>${d.pct}%</td></tr>`).join('') +
+    '</tbody>';
+}
+
+// 4b. 청산 방식 비교 (가로 막대)
+function renderExit() {
+  const W = 720, rowH = 48, top = 8, left = 170, right = 96;
+  const H = top + EXITS.length * rowH + 8;
+  const plotW = W - left - right, xMax = 0.72;
+  let s = '';
+  EXITS.forEach((d, i) => {
+    const yMid = top + rowH * i + rowH / 2;
+    const w = Math.max(2, (d.ret / xMax) * plotW);
+    const note = d.note ? `<br><small>${d.note}</small>` : '';
+    s += `<text class="ax-label-strong" x="${left - 10}" y="${yMid + 4}" text-anchor="end">${esc(d.name)}</text>`;
+    s += rightRoundBar(left, yMid - 12, w, 24, d.pick ? C.blue : C.muted,
+      tipAttr(`<b>${d.name}</b><br>거래당 +${d.ret.toFixed(2)}% · PF ${d.pf.toFixed(2)}${note}`));
+    s += `<text class="val-label" x="${left + w + 8}" y="${yMid + 4}">+${d.ret.toFixed(2)}%</text>`;
+    if (d.pick) s += `<text class="pick-badge" x="${left + w + 58}" y="${yMid + 4}">채택</text>`;
+  });
+  s += `<line class="ax-line" x1="${left}" x2="${left}" y1="${top}" y2="${H - 8}"/>`;
+  document.getElementById('chart-exit').innerHTML = svgEl(W, H, s);
+  document.getElementById('tbl-exit').innerHTML =
+    '<thead><tr><th>청산 방식</th><th>거래당 순수익</th><th>Profit Factor</th></tr></thead><tbody>' +
+    EXITS.map((d) => `<tr><td>${d.name}${d.pick ? ' <b>(채택)</b>' : ''}${d.note ? ` — ${d.note}` : ''}</td><td>+${d.ret.toFixed(2)}%</td><td>${d.pf.toFixed(3)}</td></tr>`).join('') +
+    '</tbody>';
+}
+
+// ── 툴팁 (호버 + 터치) ────────────────────────────
+const tip = document.getElementById('tip');
+function showTip(target, cx, cy) {
+  tip.innerHTML = target.getAttribute('data-tip');
+  tip.classList.add('on');
+  const r = tip.getBoundingClientRect();
+  let tx = cx + 14, ty = cy - r.height - 10;
+  if (tx + r.width > window.innerWidth - 8) tx = cx - r.width - 14;
+  if (ty < 8) ty = cy + 16;
+  tip.style.left = tx + 'px';
+  tip.style.top = ty + 'px';
+}
+document.addEventListener('pointermove', (e) => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t) showTip(t, e.clientX, e.clientY);
+  else tip.classList.remove('on');
+});
+document.addEventListener('pointerdown', (e) => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t) showTip(t, e.clientX, e.clientY);
+});
+
+renderJourney();
+renderFolds();
+renderMonthly();
+renderUpside();
+renderExit();
+</script>
+
+</body>
+</html>
