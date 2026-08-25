@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>실시간 시세가 조용히 죽는 세 가지 방법 — SEEDTICK 기술블로그</title>
+<meta name="description" content="에러 화면은 차라리 친절하다. 무서운 건 마지막 가격을 그대로 띄운 채 멈춰 있는 화면이다. SEEDTICK 이전 프로젝트 두 개에서 웹소켓이 죽는 방식을 세 가지 배웠다." />
+<meta name="theme-color" content="#f7f9fc" />
+<link rel="icon" href="../assets/favicon.png" type="image/png" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="실시간 시세가 조용히 죽는 세 가지 방법 — SEEDTICK 기술블로그" />
+<meta property="og:description" content="에러 화면은 차라리 친절하다. 무서운 건 마지막 가격을 그대로 띄운 채 멈춰 있는 화면이다. SEEDTICK 이전 프로젝트 두 개에서 웹소켓이 죽는 방식을 세 가지 배웠다." />
+<meta property="og:image" content="../assets/shots/trading.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" />
+<link rel="stylesheet" href="../styles.css" />
+<link rel="stylesheet" href="../blog.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" />
+      SEEDTICK
+    </a>
+    <nav class="nav-links">
+      <a href="./">기술블로그</a>
+      <a class="btn btn-ghost btn-sm" href="../#install">설치하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="post">
+    <header class="post-head">
+      <a class="back-link" href="./">← 기술블로그</a>
+      <h1>실시간 시세가 조용히 죽는 세 가지 방법</h1>
+      <p class="summary">에러 화면은 차라리 친절하다. 무서운 건 마지막 가격을 그대로 띄운 채 멈춰 있는 화면이다. SEEDTICK 이전 프로젝트 두 개에서 웹소켓이 죽는 방식을 세 가지 배웠다.</p>
+      <div class="post-meta">
+        <span class="tag">엔지니어링</span>
+        <time datetime="2026-08-25">2026.08.25</time>
+        <span>읽는 데 8분</span>
+      </div>
+    </header>
+
+    <div class="prose">
+<div class="callout">
+  <span class="callout-k">이 글의 배경</span>
+  <p>여기 나오는 사례는 SEEDTICK을 만들기 전, 과도기에 만든 프로젝트 두 개에서 겪은 일이다. 하나는 한국투자증권(KIS) API로 실시간 시세를 받아 보여주던 <b>React Native 앱</b>, 다른 하나는 같은 API로 수십 종목을 동시 스캔하던 <b>웹(브라우저) 시뮬레이터</b>다. 어느 쪽에서 겪었는지는 본문에 그때그때 적었다. 여기서 배운 규칙은 지금 만들고 있는 SEEDTICK에 그대로 이어졌다.</p>
+</div>
+
+<p>실시간 시세 화면의 최악의 장애는 크래시가 아니다. 크래시는 적어도 <b>죽었다는 걸 알려준다</b>. 최악은 소켓이 끊겼는데 화면은 마지막 가격을 그대로 띄우고 있는 상태다. 겉보기에 멀쩡한 죽은 화면. 자동매매가 물려 있으면 이건 UI 버그가 아니라 돈 문제가 된다.</p>
+
+<p>이 "조용한 죽음"을 세 가지 다른 방식으로 겪었다.</p>
+
+<h2>1. iOS가 소켓을 끊고, 아무도 다시 열지 않는다 — RN 앱</h2>
+
+<p>증상: 앱을 잠깐 백그라운드로 보냈다가 돌아오면 가격이 멈춰 있다. 에러도 없고, 로딩 표시도 없다. 그냥 마지막 가격이 계속 떠 있다.</p>
+
+<p>원인은 두 겹이었다. 첫째, <b>iOS는 앱이 백그라운드로 가면 웹소켓을 강제로 끊는다.</b> 이건 플랫폼의 정상 동작이라 막을 수 없다. 둘째 — 이게 진짜 문제였는데 — <code>onclose</code>는 호출되지만 그 안에 재연결 로직이 없었고, <b>화면은 언마운트된 적이 없으니 <code>useEffect</code>가 다시 돌 일도 없다</b>. 소켓을 다시 열어 줄 트리거가 코드 어디에도 없었던 것이다.</p>
+
+<p>해결은 "앱이 돌아오는 순간"을 트리거로 삼는 것이었다. React Native의 <code>AppState</code>로 <code>background → active</code> 전이를 감지하고, <b>소켓이 실제로 끊긴 경우에만</b> 다시 연결한다.</p>
+
+<pre><code>// 앱이 background → foreground로 복귀하면 WS 상태 점검 후 끊겨있으면 재연결.
+// iOS는 background 진입 시 WebSocket을 강제로 종료시켜서 그냥 두면 가격 수신이 멈춤.
+useEffect(() =&gt; {
+  const appStateRef = { current: AppState.currentState };
+  const subscription = AppState.addEventListener('change', (nextState) =&gt; {
+    const prev = appStateRef.current;
+    appStateRef.current = nextState;
+    if ((prev === 'background' || prev === 'inactive') &amp;&amp; nextState === 'active') {
+      const ws = wsRef.current;
+      const isOpen = ws &amp;&amp; ws.readyState === WebSocket.OPEN;
+      if (!isOpen) initializeRealtime();   // 열려 있으면 그대로 둔다 — 중복 연결 방지
+    }
+  });
+  return () =&gt; subscription.remove();
+}, [initializeRealtime]);</code></pre>
+
+<p><code>isOpen</code> 검사가 핵심이다. 복귀할 때마다 무조건 재연결하면 멀쩡한 연결 위에 연결을 하나 더 여는 셈이고, 그게 바로 3번 문제(재연결 폭풍)의 씨앗이 된다.</p>
+
+<h2>2. readyState는 OPEN인데 데이터가 없다 — 웹 시뮬레이터</h2>
+
+<p>더 교묘한 경우다. 배포 환경에서 소켓의 <code>readyState</code>를 찍어 보면 분명히 <code>OPEN</code>인데 시세가 안 온다. 로컬에서는 재현이 안 된다.</p>
+
+<p>구성은 브라우저 → Railway에 올린 웹소켓 프록시 → KIS였다. 원인은 <b>중간 경로의 idle timeout</b>. 프록시 호스팅이 한동안 트래픽 없는 연결을 끊는데, 그 끊김이 브라우저까지 전파되지 않으면 브라우저 입장에선 <code>close</code> 이벤트도 없이 그냥 조용한 소켓이 된다. 좀비 커넥션이다.</p>
+
+<p>교과서적 처방은 주기적으로 ping frame을 보내는 것이다. 그런데 여기서 벽을 만났다. <b>브라우저의 WebSocket API는 ping frame을 직접 보낼 수 없다.</b> ping/pong은 프로토콜 레벨에 존재하지만 JS에 노출돼 있지 않다. 실제로 클라이언트에 <code>startPing()</code>을 만들었다가, 보낼 수 있는 게 없어서 <b>사실상 빈 함수로 남은</b> 흔적이 코드에 그대로 있다. 이 시도는 실패였다고 적어 두는 게 맞다.</p>
+
+<p>그래서 살아있음의 판정을 두 군데로 나눠 옮겼다.</p>
+
+<p><b>서버(프록시) 쪽</b> — Node의 <code>ws</code>는 ping frame을 보낼 수 있다. idle timeout(약 60초)보다 짧은 25초 간격으로 클라이언트에 ping을 친다.</p>
+
+<pre><code>// ws-proxy: 25초마다 ping (호스팅 idle timeout은 보통 60초)
+pingInterval = setInterval(() =&gt; {
+  if (clientSocket.readyState === WebSocket.OPEN) clientSocket.ping();
+  if (kisSocket &amp;&amp; kisSocket.readyState === WebSocket.OPEN) {
+    if (!isAlive &amp;&amp; isKisConnected) kisSocket.terminate();  // KIS 쪽 좀비도 정리
+    isAlive = false;  // 다음 데이터 수신 시 true로 복구
+  }
+}, 25000);</code></pre>
+
+<p><b>클라이언트 쪽</b> — ping을 못 보내니 발상을 바꿨다. <b>"연결이 살아 있는가"가 아니라 "데이터가 오고 있는가"를 재면 된다.</b> 마지막 수신 시각(<code>lastDataTime</code>)을 기록해 두고 60초마다 검사해서, 구독 중인 종목이 있는데도 90초간 아무것도 안 왔으면 연결 상태와 무관하게 강제로 닫고 다시 연다.</p>
+
+<pre><code>// 구독 중인데 90초간 데이터가 없으면 연결 문제로 간주
+if (this.subscribedTickers.size &gt; 0 &amp;&amp; this.lastDataTime) {
+  const silence = Date.now() - this.lastDataTime;
+  if (silence &gt; 90000) {
+    this.socket.close(4000, 'Health check failed');
+    this.scheduleReconnect();
+  }
+}</code></pre>
+
+<p>이 사건에서 얻은 문장이 하나 있다. <b><code>readyState === OPEN</code>은 연결이 살아 있다는 증거가 아니다. 살아 있다는 증거는 데이터뿐이다.</b></p>
+
+<h2>3. 재연결이 재연결을 부른다</h2>
+
+<p>재연결 로직을 넣고 나면 새로운 종류의 장애가 생긴다. 이번엔 소켓이 안 죽어서가 아니라 <b>너무 부지런히 살아나서</b> 문제였다.</p>
+
+<p><b>사례 A — 로그아웃했는데 계속 접속한다 (웹).</b> <code>onclose → scheduleReconnect()</code> 경로가 인증 상태를 확인하지 않았다. 사용자가 로그아웃해서 서버가 연결을 거절하는데, 클라이언트는 거절당할 때마다 또 접속을 시도했다. 무한 재연결. 재연결 스케줄러의 첫 줄은 백오프 계산이 아니라 <b>"지금 재연결해도 되는 상태인가"</b>여야 했다.</p>
+
+<pre><code>scheduleReconnect() {
+  if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+  const { kisAuth } = useStore.getState();
+  if (!kisAuth.isLoggedIn) return;          // 로그아웃 상태면 재연결 자체를 포기
+  const keyToUse = kisAuth.approvalKey || this.approvalKey;
+  if (!keyToUse) return;                    // 인증키가 없어도 마찬가지
+  this.reconnectTimer = setTimeout(() =&gt; this.connect(keyToUse), 5000);
+}</code></pre>
+
+<p>같은 이유로, 재로그인해서 새 키로 갈아탈 때는 기존 소켓을 <b>정상 종료 코드(1000)</b>로 닫는다. 이상 종료로 닫으면 <code>onclose</code>가 "사고가 났다"고 판단해 옛 키로 재연결을 예약해 버리기 때문이다. 종료 코드는 장식이 아니라 <b>"이 죽음에 대응하지 마라"는 메시지</b>였다.</p>
+
+<p><b>사례 B — 화면 두 개가 서로를 걷어찬다 (RN 앱).</b> KIS는 <b>앱키당 웹소켓 세션을 1개만 허용</b>한다. 실시간 화면과 계좌 화면이 각자 소켓을 열자, 서버가 <code>ALREADY IN USE appkey</code>로 한쪽을 거절하고, 거절당한 쪽이 재연결해서 이번엔 반대쪽을 밀어내고 — 두 화면이 서로의 세션을 뺏는 재연결 폭풍이 됐다.</p>
+
+<p>가드를 덧대는 걸로는 부족해서 결국 설계를 바꿨다. <b>클라이언트가 증권사 소켓에 직접 붙는 구조 자체를 버리고</b>, 백엔드가 KIS에 단일 연결을 유지하면서 원본 바이너리 프레임을 파싱해 JSON으로 중계하는 프록시로 전환했다. 앱 쪽에서 KIS 프로토콜 파싱·구독 관리 코드 134줄이 39줄로 줄었다. 세션 제한, 키 관리, 프로토콜 파싱은 전부 서버의 일이 됐고, 클라이언트는 "우리 서버에 붙는다"라는 한 가지 일만 하게 됐다.</p>
+
+<h2>정리 — 소켓 코드에 새긴 세 가지 규칙</h2>
+
+<ul>
+  <li><b>재연결의 트리거를 명시적으로 설계한다.</b> <code>onclose</code>만 믿으면 안 된다. 플랫폼 생명주기(<code>AppState</code>)가 트리거가 되어야 하는 경우가 있다.</li>
+  <li><b>살아있음의 기준은 연결 상태가 아니라 데이터 수신 시각이다.</b> <code>readyState</code>는 거짓말을 한다.</li>
+  <li><b>재연결하기 전에 "해도 되는가"를 먼저 묻는다.</b> 인증 상태, 세션 제한, 종료 코드. 부지런한 재연결은 게으른 재연결보다 위험할 수 있다.</li>
+</ul>
+
+<div class="callout">
+  <span class="callout-k">그래서 지금은</span>
+  <p>SEEDTICK의 실시간 계층은 이 세 규칙 위에서 시작했다. 연결 상태를 화면에 배지로 노출해 "조용한 죽음"이 애초에 조용할 수 없게 만들었고, 재연결은 구독 목록 복원과 지수 백오프를 갖춘 단일 관리자가 전담한다. 같은 문제를 세 번째 프로젝트에서 또 겪지 않는 것 — 과도기 프로젝트가 남긴 가장 큰 자산이다.</p>
+</div>
+    </div>
+
+    <footer class="post-foot">
+      <p class="disclaimer">이 글은 SEEDTICK 이전에 만든 개인 프로젝트에서 겪은 일을 다룬 엔지니어링 기록이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+      <nav class="post-nav">
+        <a href="tick-flood"><span>다음 글</span><b>초당 수백 건의 틱, 상태 커밋은 초당 두 번</b></a>
+      </nav>
+    </footer>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand brand-footer">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" loading="lazy" />
+      SEEDTICK
+    </span>
+    <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+    <p class="footer-links"><a href="../">앱 소개로 돌아가기</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

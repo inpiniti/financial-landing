@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>모든 API가 멈췄다 — 이벤트 루프는 하나였다 — SEEDTICK 기술블로그</title>
+<meta name="description" content="서버가 죽은 것도 아닌데 가장 가벼운 요청까지 몇 분씩 멈췄다. 원인은 async 함수 안의 동기 호출 하나. 프론트엔드의 JS 스레드가 멈추는 것과 정확히 같은 원리였다." />
+<meta name="theme-color" content="#f7f9fc" />
+<link rel="icon" href="../assets/favicon.png" type="image/png" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="모든 API가 멈췄다 — 이벤트 루프는 하나였다 — SEEDTICK 기술블로그" />
+<meta property="og:description" content="서버가 죽은 것도 아닌데 가장 가벼운 요청까지 몇 분씩 멈췄다. 원인은 async 함수 안의 동기 호출 하나. 프론트엔드의 JS 스레드가 멈추는 것과 정확히 같은 원리였다." />
+<meta property="og:image" content="../assets/shots/trading.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" />
+<link rel="stylesheet" href="../styles.css" />
+<link rel="stylesheet" href="../blog.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" />
+      SEEDTICK
+    </a>
+    <nav class="nav-links">
+      <a href="./">기술블로그</a>
+      <a class="btn btn-ghost btn-sm" href="../#install">설치하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="post">
+    <header class="post-head">
+      <a class="back-link" href="./">← 기술블로그</a>
+      <h1>모든 API가 멈췄다 — 이벤트 루프는 하나였다</h1>
+      <p class="summary">서버가 죽은 것도 아닌데 가장 가벼운 요청까지 몇 분씩 멈췄다. 원인은 async 함수 안의 동기 호출 하나. 프론트엔드의 JS 스레드가 멈추는 것과 정확히 같은 원리였다.</p>
+      <div class="post-meta">
+        <span class="tag">엔지니어링</span>
+        <time datetime="2026-08-25">2026.08.25</time>
+        <span>읽는 데 6분</span>
+      </div>
+    </header>
+
+    <div class="prose">
+<div class="callout">
+  <span class="callout-k">이 글의 배경</span>
+  <p>SEEDTICK 이전 과도기에 만든 프로젝트의 이야기다. 실적발표 데이터 수집과 자동매매를 맡던 <b>FastAPI(Python) 백엔드</b>로, 앱이 아니라 서버에서 겪은 일이다. 다만 사고의 원리는 프론트엔드의 JS 스레드와 정확히 같아서, 이 사건이 지금 React Native 코드를 쓰는 방식에도 영향을 줬다.</p>
+</div>
+
+<p>증상은 이상했다. 어느 순간부터 <b>모든 API가 pending</b>이 됐다. 무거운 데이터 수집 API만이 아니라, DB도 안 건드리고 딕셔너리 하나 돌려주는 <code>status</code> 같은 초경량 요청까지 몇 분씩 응답이 없었다. 서버 프로세스는 살아 있었다. CPU가 치솟은 것도, 메모리가 터진 것도 아니었다.</p>
+
+<h2>단서 — "관계없는 요청까지" 멈춘다는 것</h2>
+
+<p>여기서 증상 자체가 단서였다. 특정 API가 느린 거라면 그 API의 문제다. 하지만 <b>서로 관계없는 요청이 전부 같이 멈춘다</b>면, 그들이 공유하는 무언가가 막힌 것이다. 그리고 FastAPI의 async 엔드포인트들이 공유하는 것은 하나다 — <b>단일 스레드로 도는 이벤트 루프.</b></p>
+
+<p>이벤트 루프는 협력적(cooperative) 스케줄러다. 각 코루틴이 <code>await</code> 지점에서 자발적으로 제어권을 반납해야 다음 작업이 돈다. 누군가 반납하지 않고 버티면, 그 시간 동안 <b>루프 위의 다른 모든 작업이 함께 정지</b>한다. "가장 가벼운 요청까지 멈췄다"는 건 루프 자체가 잡혀 있다는 신호였다.</p>
+
+<h2>원인 — async def 안의 동기 호출 500번</h2>
+
+<p>범인은 포지션 조회 엔드포인트였다.</p>
+
+<pre><code>@router.get("/positions")
+async def positions():
+    rows = get_positions()   # ← await가 없다. 그리고 이 함수는 동기다.
+    ...</code></pre>
+
+<p><code>async def</code>로 선언돼 있지만, 안에서 부르는 <code>get_positions()</code>는 평범한 동기 함수였고, 내부에서 <b>포지션마다 yfinance로 현재가를 조회</b>했다. 조회 한도가 500이라 최악의 경우 순차 HTTP 요청 500번. 게다가 배포 환경에서는 Yahoo의 봇 차단 때문에 각 요청이 유난히 느렸다. 합치면 이벤트 루프가 <b>수 분간</b> 이 함수 안에 갇힌다. 그동안 들어온 모든 요청은 큐에서 줄만 선다.</p>
+
+<p>이 버그의 씁쓸한 결말: 그렇게 힘들게 조회한 현재가는 <b>라우터에서 다른 값으로 덮어써서 버려지고 있었다.</b> 서버 전체를 몇 분씩 세워 가며 한 일이, 쓰이지도 않는 값 조회였다.</p>
+
+<h2>해결 — 루프에서 나가거나, 아예 하지 않거나</h2>
+
+<p>수정은 두 갈래였다.</p>
+
+<ul>
+  <li><b>안 해도 되는 일은 지운다.</b> 어차피 버려지는 현재가 조회를 <code>get_positions()</code>에서 제거했다. 최적화 이전에, 그 일이 필요한 일인지부터 물었어야 했다.</li>
+  <li><b>해야 하는 동기 작업은 루프 밖으로 보낸다.</b> 남아 있는 무거운 동기 호출들(<code>positions</code>, <code>events</code>, <code>train</code>, <code>predict</code>)은 <code>run_in_threadpool</code>로 감쌌다. 스레드풀에서 도는 동안 이벤트 루프는 다른 요청을 처리한다.</li>
+</ul>
+
+<pre><code>from starlette.concurrency import run_in_threadpool
+
+@router.get("/positions")
+async def positions():
+    rows = await run_in_threadpool(get_positions)   # 루프는 이 사이에 다른 일을 한다
+    ...</code></pre>
+
+<p>같은 뿌리의 자매 사건도 있었다. 다른 엔드포인트에서 동기 코드를 억지로 비동기처럼 쓰려고 <code>asyncio.run()</code>을 불렀다가 <code>RuntimeError: asyncio.run() cannot be called from a running event loop</code>를 만났다. 이쪽은 에러라도 내 줘서 친절한 편이다. 진짜 위험한 건 에러 없이 <b>조용히 루프를 잡아먹는</b> 첫 번째 유형이다.</p>
+
+<h2>이 사건이 프론트엔드 코드에 남긴 것</h2>
+
+<p>이 사고의 원리는 Python에 국한되지 않는다. <b>JavaScript도 단일 스레드 이벤트 루프다.</b> React Native에서 JS 스레드가 무거운 동기 작업(대형 JSON 파싱, 긴 루프, 동기 연산)에 잡히면, 서버의 "모든 API pending"에 해당하는 일이 화면에서 일어난다 — 터치가 씹히고, 애니메이션이 멎고, 가장 가벼운 상호작용까지 함께 멈춘다.</p>
+
+<p>그래서 SEEDTICK에서 온디바이스 모델 추론을 설계할 때 이 사건을 기준으로 삼았다. 큰 모델 파일은 앱 시작 경로에서 동기로 파싱하지 않고 지연 로딩하고, 추론은 틱마다가 아니라 봉 마감 주기로 묶어 JS 스레드 점유 시간을 예측 가능하게 만들었다. 서버에서 배운 규칙이 앱에서 그대로 쓰였다.</p>
+
+<div class="callout">
+  <span class="callout-k">정리</span>
+  <p><b>async 키워드는 마법이 아니다.</b> 협력적 스케줄링에서는 "내가 지금 제어권을 쥐고 있는 시간"이 곧 다른 모두의 대기 시간이다. 그리고 디버깅의 단서: <b>가장 가벼운 요청이 함께 멈췄다면, 개별 API가 아니라 모두가 공유하는 루프를 의심하라.</b></p>
+</div>
+    </div>
+
+    <footer class="post-foot">
+      <p class="disclaimer">이 글은 SEEDTICK 이전에 만든 개인 프로젝트에서 겪은 일을 다룬 엔지니어링 기록이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+      <nav class="post-nav">
+        <a href="model-on-phone"><span>다음 글</span><b>LightGBM 800그루를 폰에 넣기 — 오차 0으로 대조하기</b></a>
+      </nav>
+    </footer>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand brand-footer">
+      <img class="brand-mark" src="../assets/logo.svg" alt="" width="1874" height="2272" loading="lazy" />
+      SEEDTICK
+    </span>
+    <p>개인이 쓰려고 만든 앱이에요. 투자 권유가 아니며, 매매 결과에 대한 책임은 사용자에게 있어요.</p>
+    <p class="footer-links"><a href="../">앱 소개로 돌아가기</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
