@@ -165,6 +165,33 @@ tr.va-detail td { background: var(--bg); }
   font-size: 0.8125rem;
 }
 .guru-cell b { font-weight: 600; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.guru-cell { cursor: pointer; transition: border-color 0.12s ease, background-color 0.12s ease; }
+.guru-cell:hover, .guru-cell.active { border-color: var(--primary); background: rgba(49, 130, 246, 0.04); }
+.guru-cell:focus-visible { outline: 2px solid var(--primary); outline-offset: -1px; }
+.guru-who { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.guru-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #f2f4f6; }
+
+/* 거장 소개 팝오버 */
+.guru-pop {
+  position: absolute;
+  z-index: 30;
+  width: min(320px, calc(100vw - 32px));
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+.guru-pop[hidden] { display: none; }
+.guru-pop-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.guru-pop-head img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #f2f4f6; }
+.guru-pop-head strong { display: block; font-size: 0.9375rem; font-weight: 800; }
+.guru-pop-head span { color: var(--text-3); font-size: 0.75rem; }
+.guru-pop p { color: var(--text-2); }
+.guru-pop-book { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--text-2); font-size: 0.75rem; }
+.guru-pop-book b { font-weight: 700; color: var(--text); }
 
 /* 상태 화면(로딩·빈 상태·안내) */
 .va-state {
@@ -272,11 +299,37 @@ const VERDICTS = [
 ];
 
 // 컬럼 g1~g13 ↔ 거장 (financial/app/src/lib/votes.ts 의 VOTE_COLUMNS와 같은 순서)
-const GURUS = [
-  '벤저민 그레이엄', '세스 클라먼', '모니시 파브라이', '조엘 그린블라트',
-  '앙드레 코스톨라니', '잭 슈웨거', '워런 버핏', '필립 피셔',
-  '뉴욕주민', '피터 린치', '애스워스 다모다란', '존 템플턴', '마이클 버리',
+// 스타일·대표 서적은 financial/app/src/lib/gurus.ts 의 GURUS_INFO와 같고,
+// 설명은 .claude/skills/guru-report/references/cards-min 의 투자 철학을 한두 줄로 줄인 것.
+const GURU_INFO = [
+  { name: '벤저민 그레이엄', style: '계량 가치투자 / 안전마진', book: '현명한 투자자', avatar: 'graham',
+    desc: '가치투자의 아버지. 내재가치보다 충분히 싼 가격에만 사는 "안전마진"을 강조하며, 목적은 수익 극대화가 아니라 큰 손실 가능성을 없애는 거예요.' },
+  { name: '세스 클라먼', style: '보수적 가치투자 / 안전마진', book: '안전마진', avatar: 'klarman',
+    desc: '자본 보존이 최우선. 위험은 변동성이 아니라 영구적 자본 손실 가능성이며, 안전마진 없는 기회라면 현금 보유가 정답이라고 봐요.' },
+  { name: '모니시 파브라이', style: '단도 투자 / 고집적 가치투자', book: '단도 투자', avatar: 'pabrai',
+    desc: '"앞면이면 크게 벌고 뒷면이어도 거의 안 잃는" 비대칭 베팅만 골라요. 검증된 단순한 사업을 드물게 오는 기회에 집중 투자해요.' },
+  { name: '조엘 그린블라트', style: '마법공식 / 고자본수익률', book: '주식시장을 이기는 작은 책', avatar: 'greenblatt',
+    desc: '좋은 기업(높은 자본수익률)을 싼 가격(높은 이익수익률)에 사는 마법공식. 스토리나 직관 없이 두 지표로 기계적으로 순위를 매겨요.' },
+  { name: '앙드레 코스톨라니', style: '투자 심리학 / 달걀 모형', book: '돈 뜨겁게 사랑하고 차갑게 다루어라', avatar: 'kostolany',
+    desc: '주가 = 유동성 × 심리. 달걀 모형 6국면 중 공포가 극에 달한 과매도 국면에서 사고, 빚투가 몰리는 과열 국면에서 팔아요.' },
+  { name: '잭 슈웨거', style: '시장 마법사 / 트레이딩 거장', book: '마켓 위저드', avatar: 'schwager',
+    desc: '리스크 관리가 수익보다 먼저. 승률보다 손익비를 보고, 틀리면 빨리 손절하고 맞으면 오래 보유해요. 조건이 안 맞으면 관망도 포지션이에요.' },
+  { name: '워런 버핏', style: '경제적 해자 / 장기 복리', book: '워런 버핏의 재무제표 활용법', avatar: 'buffett',
+    desc: '브랜드·전환비용·저비용 구조 같은 지속적 경쟁우위가 전부예요. 5~10년 추세가 보이는 단순한 재무제표의 훌륭한 기업을 적정가에 사서 오래 들고 가요.' },
+  { name: '필립 피셔', style: '위대한 기업 / 사실수집(Scuttlebutt)', book: '위대한 기업에 투자하라', avatar: 'fisher',
+    desc: '"얼마나 싼가"보다 "얼마나 좋은 기업인가". 경영진·R&D·시장 지위를 이해관계자 탐문(스커틀벗)으로 확인하고, 소수 확신 종목을 장기 보유해요.' },
+  { name: '뉴욕주민', style: '가치투자 / 월스트리트 트레이더', book: '미국 주식 투자지도', avatar: 'nyjumin',
+    desc: '미국 시장의 구조적 장기 우상향에 베팅. 섹터를 먼저 보고 종목은 그다음, 플랫폼·톨게이트형 사업을 코어-새틀라이트로 꾸준히 적립해요.' },
+  { name: '피터 린치', style: '생활 속 발견 / 가브 성장주', book: '이기는 투자', avatar: 'lynch',
+    desc: '종목을 6가지 유형으로 나눠 각각 다른 잣대로 판단해요. 매수 이유를 2분 안에 설명 못 하면 보류, 주가가 아니라 스토리를 따라가요.' },
+  { name: '애스워스 다모다란', style: '뉴욕대 가치평가 거장', book: '주식 가치평가 완벽정리', avatar: 'damodaran',
+    desc: '가치의 근거는 회계 이익이 아닌 현금흐름. 내재가치와 배수를 교차 검증하고, 점이 아닌 범위로 생각하며 가격과 가치의 괴리에서 기회를 찾아요.' },
+  { name: '존 템플턴', style: '글로벌 역발상 / 영적 투자자', book: '주식 투자 원칙', avatar: 'templeton',
+    desc: '최대 비관의 순간이 최고의 매수 시점. 전 세계에서 가장 싼 시장을 찾고 5년 뒤 이익으로 평가하며, 더 싼 대안이 있을 때만 팔아요.' },
+  { name: '마이클 버리', style: '역발상 / 딥 밸류', book: '빅쇼트', avatar: 'burry',
+    desc: '공시·계약서 같은 원자료를 직접 검증하고 컨센서스를 의심해요. 손실은 한정되고 보상은 열린 비대칭 베팅만 하고, 전제가 안 깨졌으면 버텨요.' },
 ];
+const GURUS = GURU_INFO.map((g) => g.name);
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -339,8 +392,9 @@ function rowHtml(row) {
   const screeners = (row.screeners || [])
     .map((s) => `<span>${esc(s)}</span>`)
     .join('') || '<span class="verdict-none">—</span>';
-  const gurus = GURUS
-    .map((name, i) => `<div class="guru-cell"><b>${esc(name)}</b>${verdictHtml(scores[i])}</div>`)
+  const gurus = GURU_INFO
+    .map((g, i) => `<div class="guru-cell" data-guru="${i}" role="button" tabindex="0" aria-label="${esc(g.name)} 소개 보기">
+      <span class="guru-who"><img class="guru-avatar" src="../assets/gurus/${g.avatar}.png" alt="" width="300" height="300" loading="lazy" /><b>${esc(g.name)}</b></span>${verdictHtml(scores[i])}</div>`)
     .join('');
 
   return `
@@ -403,6 +457,90 @@ function renderRows(rows) {
     });
   }
 }
+
+// ── 거장 소개 팝오버(마우스 오버·클릭·키보드) ─────────────
+const $pop = document.createElement('div');
+$pop.className = 'guru-pop';
+$pop.hidden = true;
+$pop.setAttribute('role', 'dialog');
+document.body.appendChild($pop);
+let popCell = null;       // 팝오버가 붙어 있는 셀
+let popPinned = false;    // 클릭으로 고정했는지(고정이면 마우스가 떠나도 유지)
+
+function showGuruPop(cell, pinned) {
+  const g = GURU_INFO[Number(cell.dataset.guru)];
+  if (!g) return;
+  if (popCell !== cell) {
+    $pop.innerHTML = `
+      <div class="guru-pop-head">
+        <img src="../assets/gurus/${g.avatar}.png" alt="" width="300" height="300" />
+        <div><strong>${esc(g.name)}</strong><span>${esc(g.style)}</span></div>
+      </div>
+      <p>${esc(g.desc)}</p>
+      <div class="guru-pop-book">📘 대표 서적 <b>${esc(g.book)}</b></div>`;
+  }
+  if (popCell && popCell !== cell) popCell.classList.remove('active');
+  popCell = cell;
+  popPinned = pinned || (popPinned && popCell === cell);
+  cell.classList.add('active');
+  $pop.hidden = false;
+
+  // 셀 아래에 붙이되, 화면 오른쪽·아래로 넘치면 안쪽으로 밀어 넣는다
+  const r = cell.getBoundingClientRect();
+  const pw = $pop.offsetWidth, ph = $pop.offsetHeight;
+  let left = r.left + window.scrollX;
+  let top = r.bottom + window.scrollY + 8;
+  const maxLeft = window.scrollX + document.documentElement.clientWidth - pw - 16;
+  if (left > maxLeft) left = Math.max(window.scrollX + 16, maxLeft);
+  if (r.bottom + 8 + ph > window.innerHeight && r.top - 8 - ph > 0) top = r.top + window.scrollY - ph - 8;
+  $pop.style.left = `${left}px`;
+  $pop.style.top = `${top}px`;
+}
+
+function hideGuruPop() {
+  if (popCell) popCell.classList.remove('active');
+  popCell = null;
+  popPinned = false;
+  $pop.hidden = true;
+}
+
+document.addEventListener('mouseover', (e) => {
+  const cell = e.target.closest('.guru-cell');
+  if (cell && !popPinned) showGuruPop(cell, false);
+});
+document.addEventListener('mouseout', (e) => {
+  if (popPinned || !popCell) return;
+  const leavingCell = e.target.closest('.guru-cell') === popCell;
+  const leavingPop = $pop.contains(e.target);
+  if (!leavingCell && !leavingPop) return;
+  const to = e.relatedTarget;
+  if (to && (popCell.contains(to) || $pop.contains(to))) return;
+  hideGuruPop();
+});
+document.addEventListener('click', (e) => {
+  const cell = e.target.closest('.guru-cell');
+  if (cell) {
+    e.stopPropagation();
+    if (popPinned && popCell === cell) hideGuruPop();
+    else showGuruPop(cell, true);
+    return;
+  }
+  if (!$pop.contains(e.target)) hideGuruPop();
+});
+document.addEventListener('keydown', (e) => {
+  const cell = e.target.closest?.('.guru-cell');
+  if (cell && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); showGuruPop(cell, true); }
+  if (e.key === 'Escape') hideGuruPop();
+});
+document.addEventListener('focusin', (e) => {
+  const cell = e.target.closest?.('.guru-cell');
+  if (cell && !popPinned) showGuruPop(cell, false);
+});
+document.addEventListener('focusout', (e) => {
+  if (!popPinned && e.target.closest?.('.guru-cell') && !$pop.contains(e.relatedTarget)) hideGuruPop();
+});
+window.addEventListener('scroll', () => { if (popCell) showGuruPop(popCell, popPinned); }, { passive: true });
+window.addEventListener('resize', () => { if (popCell) showGuruPop(popCell, popPinned); });
 
 // ── 일자별 표결 추이(100% 누적 막대) ──────────────────────
 const SEG_COLORS = ['#f04452', '#4e5968', '#c5cbd3', '#03b26c']; // 매수·보유·관망·매도 (tally 미니바와 동일)
