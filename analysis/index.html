@@ -136,8 +136,18 @@ tr.va-row:hover, tr.va-row.open { background: rgba(49, 130, 246, 0.04); }
   white-space: nowrap;
 }
 
-/* 펼침: 거장별 판정 */
+/* 펼침: 일자별 표결 추이 + 거장별 판정 */
 tr.va-detail td { background: var(--bg); }
+.trend { margin-bottom: 14px; }
+.trend-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; margin-bottom: 6px; }
+.trend-head h3 { font-size: 0.875rem; font-weight: 800; }
+.trend-head p { color: var(--text-3); font-size: 0.75rem; }
+.trend-scroll { overflow-x: auto; }
+.trend-scroll svg { display: block; height: auto; }
+.trend-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 0.75rem; color: var(--text-2); }
+.trend-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+.trend-state { padding: 18px 0; color: var(--text-3); font-size: 0.8125rem; }
+.trend .skeleton { height: 180px; }
 .guru-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
@@ -344,7 +354,16 @@ function rowHtml(row) {
       <td class="va-chevron">▸</td>
     </tr>
     <tr class="va-detail" hidden>
-      <td colspan="7"><div class="guru-grid">${gurus}</div></td>
+      <td colspan="7">
+        <div class="trend" data-ticker="${esc(row.ticker)}">
+          <div class="trend-head">
+            <h3>일자별 표결 추이</h3>
+            <p>아래부터 매수 · 보유 · 관망 · 매도 순서예요. 숫자는 그날 그 의견을 낸 거장 수예요.</p>
+          </div>
+          <div class="trend-body"><div class="skeleton" aria-hidden="true"></div></div>
+        </div>
+        <div class="guru-grid">${gurus}</div>
+      </td>
     </tr>`;
 }
 
@@ -379,12 +398,106 @@ function renderRows(rows) {
         detail.hidden = false;
         tr.classList.add('open');
         tr.querySelector('.va-chevron').textContent = '▾';
+        loadTrend(detail.querySelector('.trend'));
       }
     });
   }
 }
 
+// ── 일자별 표결 추이(100% 누적 막대) ──────────────────────
+const SEG_COLORS = ['#f04452', '#4e5968', '#c5cbd3', '#03b26c']; // 매수·보유·관망·매도 (tally 미니바와 동일)
+const SEG_INK = ['#ffffff', '#ffffff', '#191f28', '#ffffff'];
+const trendCache = new Map();
+let currentDate = null;
+
+function tallyOf(row) {
+  const tally = [0, 0, 0, 0];
+  for (let i = 1; i <= 13; i++) {
+    const s = row[`g${i}`];
+    if (typeof s === 'number' && s >= 0 && s <= 3) tally[s] += 1;
+  }
+  return tally;
+}
+
+function trendSvg(rows) {
+  const PAD_L = 40, PAD_R = 12, PAD_T = 30, PAD_B = 30;
+  const COL = 72, GAP = 2, PLOT_H = 200;
+  const W = PAD_L + rows.length * COL + PAD_R;
+  const H = PAD_T + PLOT_H + PAD_B;
+  const barW = Math.min(44, COL * 0.62);
+  let s = '';
+
+  // y축 눈금(0·50·100%)과 안내선
+  for (const pct of [0, 50, 100]) {
+    const y = PAD_T + PLOT_H - (PLOT_H * pct) / 100;
+    s += `<line x1="${PAD_L}" x2="${W - PAD_R}" y1="${y}" y2="${y}" stroke="#e5e8eb" stroke-width="1"/>`;
+    s += `<text x="${PAD_L - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#8b95a1">${pct}%</text>`;
+  }
+
+  rows.forEach((row, idx) => {
+    const tally = tallyOf(row);
+    const total = tally.reduce((a, b) => a + b, 0);
+    const cx = PAD_L + idx * COL + COL / 2;
+    const x = cx - barW / 2;
+    const [, m, d] = row.d.split('-').map(Number);
+    const isCurrent = row.d === currentDate;
+    const title = `${dateLabel(row.d)} · 매수 ${tally[0]} · 보유 ${tally[1]} · 관망 ${tally[2]} · 매도 ${tally[3]}`;
+
+    if (total === 0) {
+      s += `<rect x="${x}" y="${PAD_T}" width="${barW}" height="${PLOT_H}" rx="4" fill="none" stroke="#e5e8eb" stroke-dasharray="4 3"><title>${esc(dateLabel(row.d))} · 미판정</title></rect>`;
+      s += `<text x="${cx}" y="${PAD_T + PLOT_H / 2 + 4}" text-anchor="middle" font-size="11" fill="#8b95a1">미판정</text>`;
+    } else {
+      // 아래부터 매수(0) → 보유 → 관망 → 매도(3) 순으로 쌓는다
+      let yTop = PAD_T + PLOT_H;
+      tally.forEach((n, v) => {
+        if (n === 0) return;
+        const h = (PLOT_H * n) / total;
+        yTop -= h;
+        const y = yTop + GAP / 2;
+        const hh = Math.max(0, h - GAP);
+        s += `<rect x="${x}" y="${y}" width="${barW}" height="${hh}" rx="3" fill="${SEG_COLORS[v]}"><title>${esc(title)}</title></rect>`;
+        if (hh >= 12) {
+          s += `<text x="${cx}" y="${y + hh / 2 + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="${SEG_INK[v]}" pointer-events="none">${n}</text>`;
+        }
+      });
+    }
+
+    // 막대 위: 그날의 종합의견
+    const g0 = row.g0;
+    if (typeof g0 === 'number' && g0 >= 0 && g0 <= 3) {
+      s += `<text x="${cx}" y="${PAD_T - 10}" text-anchor="middle" font-size="11" font-weight="700" fill="${g0 === 2 ? '#8b95a1' : SEG_COLORS[g0]}">${VERDICTS[g0].label}</text>`;
+    }
+    // 막대 아래: 날짜
+    s += `<text x="${cx}" y="${H - 10}" text-anchor="middle" font-size="11" font-weight="${isCurrent ? 800 : 500}" fill="${isCurrent ? '#191f28' : '#4e5968'}">${m}/${d}</text>`;
+  });
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="일자별 표결 추이 100% 누적 막대 차트">${s}</svg>`;
+}
+
+async function loadTrend(box) {
+  const ticker = box.dataset.ticker;
+  const body = box.querySelector('.trend-body');
+  try {
+    let rows = trendCache.get(ticker);
+    if (!rows) {
+      rows = await rest(`ticker=eq.${encodeURIComponent(ticker)}&select=d,g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12,g13&order=d.asc`);
+      trendCache.set(ticker, rows);
+    }
+    if (rows.length === 0) {
+      body.innerHTML = '<p class="trend-state">쌓인 표결이 없어요.</p>';
+      return;
+    }
+    const legend = VERDICTS
+      .map((v, i) => `<span><i style="background:${SEG_COLORS[i]}"></i>${v.label}</span>`)
+      .join('');
+    body.innerHTML = `<div class="trend-scroll">${trendSvg(rows)}</div><div class="trend-legend">${legend}</div>`;
+  } catch {
+    body.innerHTML = '<p class="trend-state">추이를 불러오지 못했어요. 잠시 뒤 다시 펼쳐 보세요.</p>';
+  }
+}
+
 async function loadDate(date) {
+  currentDate = date;
   $summary.textContent = '표결을 불러오고 있어요';
   $card.innerHTML = `<div class="va-skeletons" aria-hidden="true">${'<div class="skeleton"></div>'.repeat(5)}</div>`;
   try {
