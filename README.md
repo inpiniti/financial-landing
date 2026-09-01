@@ -39,11 +39,12 @@ npx vercel --prod # 프로덕션
 ## 수정할 때
 
 - **설치 링크**: `index.html`에서 `expo.dev/.../builds/...` URL 두 곳(버튼 · QR 링크)을 함께 바꾼다. QR 이미지는 링크가 바뀌면 `assets/qr.svg`도 새로 만들어야 한다.
-- **설정 섹션**: 기본값·상한·계산식이 전부 앱 코드에서 온다 — `app/settings.tsx`(상한·미리보기 식), `lib/appSettings.ts`(`DEFAULT_APP_SETTINGS`, `watchCount`·`minTickRate`), `features/scalper/autopilot.ts`(`MAX_GRIDS_LIMIT`, `WATCH_COUNT_LIMIT`), `features/scalper/modelMode.ts`(`MODEL_BAR_MINUTES`), `core/model/exitRule.ts`(트레일 −5% · 하드 손절 −2% · `OUTLIER_JUMP_PCT`), `core/model/signal.ts`(진입 게이트), `core/model/model.json`(`threshold`), `core/ranking/index.ts`(순위 원천 카탈로그·총 상한). **앱에서 이 값들이 바뀌면 여기도 같이 고쳐야 한다.** 시뮬레이터의 첫 진입 금액은 앱과 같은 `진입금액 × 동시 종목 수`(수량 모드면 `수량 × 현재가`)라 앱 화면의 미리보기 숫자와 일치해야 한다.
+- **설정 섹션**: 기본값·상한·계산식이 전부 앱 코드에서 온다 — `app/settings.tsx`(상한·미리보기 식), `lib/appSettings.ts`(`DEFAULT_APP_SETTINGS`, `watchCount`·`minTickRate`), `features/scalper/autopilot.ts`(`MAX_GRIDS_LIMIT`, `WATCH_COUNT_LIMIT`), `features/scalper/martingaleMode.ts`(`MARTINGALE_BAR_MINUTES`, 모드 스위치), `core/martingale/index.ts`(`MARTINGALE_CONFIG` — 익절 +3% · 손절 −3% · 19:55 ET 마감, `MARTINGALE_MIN_BARS`, 진입 세션), `core/ranking/index.ts`(순위 원천 카탈로그·총 상한). **앱에서 이 값들이 바뀌면 여기도 같이 고쳐야 한다.** 시뮬레이터의 첫 진입 금액은 앱과 같은 `진입금액 × 동시 종목 수`(수량 모드면 `수량 × 현재가`)라 앱 화면의 미리보기 숫자와 일치해야 한다.
 - **전략 변경 이력**:
   - 2026-08-18 — 변곡점(Savitzky–Golay)+물타기 그리드 → 추세(분봉 이동평균 4선). 이때 물타기 전용이던 `grid-risk.html`(그리드 리스크 계산표)과 호가 탭 스크린샷을 지웠다.
   - 2026-08-22 — 추세 → **모델**(LightGBM, 5분봉 Feature 33개, 확률 ≥ 학습 상위 1% 임계값 0.3767, 정규장 · 누적 거래대금 ≥ $2M · $1 초과). 앱 롤백 스위치는 `MODEL_MODE = false`.
   - 2026-08-24 — 청산을 **트레일링**으로(고점 −5% / 하드 손절 −2%, 익절 상한 없음) + **매수 후보 게이트**(틱/초 상위 `watchCount`종, 기본 5). 랜딩의 −7% 손절·5선 청산 문구는 전부 이때 걷어냈다.
+  - 2026-09-01 — 모델 → **±3% 단타**(1분봉 4선 정배열 진입 · 익절 +3% · 손절 −3% · 19:55 ET 당일 청산 · 프리~애프터만, ADR 0007). 8-27~31에 돌던 배수 물타기 시험은 이날 제거(수익은 냈지만 한 종목 $1,000+ 노출 꼬리 위험 — `financial-app/docs/분석/2026-09-01_물타기-vs-손절-비교.md`). 랜딩의 모델·트레일링·상위 1% 문구는 전부 이때 걷어냈다. 앱 롤백 스위치는 `MARTINGALE_MODE = false`(모델로 복귀).
 - **기술블로그**: 글 하나가 파일 하나다. 새 글은 기존 파일을 복사해 `<article class="post">` 안만 갈아 끼우고, `blog/index.html`의 카드와 앞뒤 글의 `.post-nav`, 그리고 `index.html`의 티저 카드 3장을 함께 손본다(최신 3편). 본문에 쓰는 조각은 `blog.css`에 있다 — `.table-wrap > table`(표는 가로 스크롤), `.callout` / `.callout-warn`, `.kpis > .kpi`, `pre > code`, `blockquote > cite`. 표에서 숫자 열은 `class="num"`, 강조 행은 `class="hl"`.
   - 글의 근거는 앱·분석 저장소 문서다: `financial-analyze/docs/analysis/*`, `financial-app/docs/domain/모델/*`, `financial-app/docs/분석/*`. **숫자를 새로 쓸 때는 그 문서에서 그대로 옮긴다.**
   - 성과 숫자를 쓰는 글에는 하단 `.disclaimer`(과거 데이터 · 수익 보장 아님)를 그대로 둔다.
