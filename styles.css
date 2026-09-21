@@ -715,3 +715,282 @@ a { color: inherit; text-decoration: none; }
 .footer-links { margin-top: 8px; }
 .footer-links a { color: var(--text-2); font-weight: 700; font-size: 0.875rem; }
 .footer-links a:hover { color: var(--text); }
+
+/* ── spotlight (실시간 감지 & 모의투자) ──────────────── */
+.spotlight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+.spotlight-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 36px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.spotlight-card-content {
+  flex: 1 1 auto;
+}
+.spotlight-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.spotlight-badge-live {
+  background: #fff0f1;
+  color: #f04452;
+  border: 1px solid #ffd2d5;
+}
+.spotlight-badge-paper {
+  background: #f3e8ff;
+  color: #7928ca;
+  border: 1px solid #e9d5ff;
+}
+.spotlight-card h3 {
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin-bottom: 12px;
+}
+.spotlight-card p {
+  color: var(--text-2);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.spotlight-bullets {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.spotlight-bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+.spotlight-bullets svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--primary);
+  margin-top: 2px;
+}
+.spotlight-visual {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  padding-top: 16px;
+}
+.spotlight-visual .phone {
+  width: 248px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.spotlight-visual .phone:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 48px rgba(23, 31, 46, 0.18);
+}
+
+/* 실시간 감지 펄스 애니메이션 & 레이더 효과 */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f04452;
+  position: relative;
+  display: inline-block;
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(240, 68, 82, 0.45);
+  animation: live-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes live-ping {
+  0% { transform: scale(0.6); opacity: 1; }
+  80%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+.radar-glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(240, 68, 82, 0.15) 0%, rgba(240, 68, 82, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: pulse-glow 3s ease-in-out infinite alternate;
+  z-index: 0;
+}
+@keyframes pulse-glow {
+  0% { transform: scale(0.85); opacity: 0.5; }
+  100% { transform: scale(1.15); opacity: 0.95; }
+}
+
+.paper-glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(121, 40, 202, 0.12) 0%, rgba(121, 40, 202, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: pulse-glow 3s ease-in-out infinite alternate 1.5s;
+  z-index: 0;
+}
+
+/* ── 데스크탑 모니터 목업 ────────────────────────── */
+.desktop-hero {
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.monitor-wrapper {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  position: relative;
+}
+.monitor {
+  position: relative;
+  background: #1e242c;
+  border-radius: 18px;
+  padding: 14px 14px 18px 14px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.monitor:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 32px 72px rgba(15, 23, 42, 0.26), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+.monitor-camera {
+  width: 6px;
+  height: 6px;
+  background: #0f1318;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+.monitor-camera::after {
+  content: "";
+  position: absolute;
+  top: 1.5px;
+  left: 1.5px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #3b82f6;
+  opacity: 0.7;
+}
+.monitor-screen {
+  position: relative;
+  background: #0c1017;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  aspect-ratio: 16 / 9;
+}
+.monitor-screen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.monitor-stand {
+  width: 96px;
+  height: 44px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #2b323c 0%, #1c222b 100%);
+  clip-path: polygon(14% 0%, 86% 0%, 100% 100%, 0% 100%);
+}
+.monitor-base {
+  width: 210px;
+  height: 10px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+.monitor-shadow {
+  width: 55%;
+  height: 16px;
+  margin: -2px auto 0;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0) 72%);
+  border-radius: 50%;
+}
+
+/* 데스크탑 피처 칩 그리드 */
+.desktop-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 48px;
+  width: 100%;
+}
+.desktop-feature-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 24px 22px;
+  box-shadow: var(--shadow);
+}
+.desktop-feature-card h4 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desktop-feature-card p {
+  color: var(--text-2);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  margin: 0;
+}
+.badge-tag {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #e8f2ff;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 900px) {
+  .spotlight-grid { grid-template-columns: 1fr; }
+  .desktop-features { grid-template-columns: 1fr; }
+  .monitor { padding: 10px 10px 14px 10px; border-radius: 14px; }
+  .monitor-stand { width: 72px; height: 32px; }
+  .monitor-base { width: 160px; height: 8px; }
+}
+
+@media (max-width: 640px) {
+  .spotlight-card { padding: 26px 20px 24px; }
+  .spotlight-visual .phone { width: 216px; }
+  .monitor-wrapper { max-width: 100%; }
+}
+
